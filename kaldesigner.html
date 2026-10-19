@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KalDesigner – Foto-Kalender-Studio (TKexe-Stil)</title>
+<!-- VERSION 27 -->
+<style>
+:root{
+  --c-head:#2c3e50; --c-bg:#ffffff; --c-weekend:#c0392b;
+  --c-holiday:#c0392b; --c-grid:#ccc; --font:'Segoe UI',sans-serif; --fs:15px; --cellh:74px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font);display:flex;min-height:100vh;background:#e8eaed}
+#side{width:300px;flex:0 0 300px;background:#fff;border-right:1px solid #ccc;padding:14px;overflow-y:auto;height:100vh;position:sticky;top:0}
+#side h1{font-size:18px;margin:0 0 10px;color:#6d4aff}
+#side fieldset{border:1px solid #ddd;border-radius:6px;margin-bottom:12px;padding:8px}
+#side legend{font-weight:600;font-size:13px;color:#555}
+#side label{display:block;font-size:12px;margin:6px 0 2px;color:#444}
+#side select{width:100%;padding:4px}
+#side input[type=color]{width:44px;height:26px;padding:0;border:1px solid #ccc}
+.btn{display:inline-block;background:#6d4aff;color:#fff;border:none;border-radius:5px;padding:8px 12px;font-size:13px;cursor:pointer;margin:3px 2px}
+.btn.gray{background:#888}
+.row{display:flex;align-items:center;gap:6px;margin:4px 0}
+.cb{font-size:13px;display:flex;gap:6px;align-items:center;margin:3px 0}
+#main{flex:1;padding:24px;display:flex;flex-direction:column;align-items:center;gap:26px}
+.page{width:100%;max-width:820px;background:var(--c-bg);box-shadow:0 2px 12px rgba(0,0,0,.25);padding:28px;position:relative;display:flex;flex-direction:column}
+.pagehead{display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid var(--c-head);margin-bottom:10px;flex:0 0 auto}
+.mname{font-size:34px;font-weight:700;color:var(--c-head)}
+.mmeta{font-size:14px;color:#999}
+.mfoot{flex:0 0 auto;font-size:24px;font-weight:700;color:var(--c-head);margin-top:10px}
+.ph-area{flex:1 1 auto;min-height:100px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.photo{position:relative;overflow:hidden;display:flex;cursor:pointer;background:#f0f0f0;padding:0}
+.ph-inner{width:100%;height:100%;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;position:relative}
+.photo img{width:100%;height:100%;object-fit:cover;display:block}
+.photo .hint{color:#999;font-size:13px;text-align:center}
+.cal{width:100%;border-collapse:collapse;position:relative;z-index:1;flex:0 0 auto}
+.cal th{font-size:.85em;padding:6px 4px;border-bottom:2px solid var(--c-head);text-align:left;color:var(--c-head)}
+.cal td{border:1px solid var(--c-grid);height:var(--cellh);vertical-align:top;padding:4px 6px;font-size:var(--fs);color:#222;position:relative}
+.dnum{font-weight:700}
+.kw{position:absolute;top:4px;right:5px;font-size:.72em;color:#aaa}
+.hname{display:block;color:var(--c-holiday);font-size:.72em;font-weight:600}
+.we{color:var(--c-weekend)}
+.sun{color:var(--c-holiday)}
+.out{opacity:.25}
+.today .dnum{background:var(--c-head);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center}
+.ev{display:block;font-size:.72em;color:#0369a1;margin-top:2px;white-space:pre-line;word-break:break-word}
+.moon{position:absolute;bottom:3px;right:4px;font-size:.75em;opacity:.8}
+.bgmode-page td{background:rgba(255,255,255,.85)}
+.strip{display:flex;gap:2px;position:relative;z-index:1;margin-top:4px;flex:0 0 auto}
+.sd{flex:1 1 0;min-width:0;text-align:center;border:1px solid var(--c-grid);font-size:12px;padding:5px 0 4px;cursor:pointer;color:#222;overflow:hidden}
+.sd small{display:block;font-size:9px;color:#999;line-height:1.2}
+.sd .n{font-weight:700}
+.sd.evday{box-shadow:inset 0 -3px 0 #0369a1}
+.ygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;position:relative;z-index:1}
+.mini{border:1px solid var(--c-grid);padding:10px;border-radius:6px}
+.mini h3{margin:0 0 6px;font-size:15px;color:var(--c-head);border-bottom:2px solid var(--c-head);padding-bottom:3px}
+.mg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:11px;text-align:center}
+.mg span{line-height:1.5}
+.mg .wd{font-weight:600;color:var(--c-head);opacity:.65}
+/* Deckblatt */
+.cover{overflow:hidden}
+.cover .cv-year{position:absolute;top:14px;left:50%;transform:translate(-50%,0);font-weight:800;line-height:1;color:var(--c-head);cursor:pointer;user-select:none;white-space:nowrap}
+.cover .cv-t{position:absolute;bottom:16px;width:60%;font-weight:600;color:var(--c-head);cursor:pointer;user-select:none;white-space:pre-line}
+.cover img.cv-logo{position:absolute;object-fit:contain;cursor:grab;z-index:5;user-select:none;-webkit-user-drag:none}
+.cover img.cv-logo:active{cursor:grabbing}
+.page img.mo-logo{position:absolute;object-fit:contain;cursor:grab;z-index:5;user-select:none;-webkit-user-drag:none}
+.page img.mo-logo:active{cursor:grabbing}
+.cover img.cv-photo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:cover;pointer-events:none;z-index:0}
+.cap-edit{cursor:text}
+/* Auflösungs-Prüfdialog */
+#resOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+#resOverlay.on{display:flex}
+#resBox{background:#fff;border-radius:10px;max-width:900px;width:100%;max-height:88vh;overflow:auto;padding:18px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+#resBox h2{margin:0 0 6px;font-size:18px;color:#6d4aff}
+#resBox table{width:100%;border-collapse:collapse;font-size:12px}
+#resBox th,#resBox td{border-bottom:1px solid #eee;padding:5px 6px;text-align:left;vertical-align:top}
+#resBox th{background:#f6f6f8;position:sticky;top:0}
+.dpi-ok{color:#137333;font-weight:600}
+.dpi-warn{color:#b06000;font-weight:600}
+.dpi-bad{color:#c0392b;font-weight:600}
+.res-bar{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap}
+@media print{
+  #side{display:none}
+  #resOverlay{display:none !important}
+  body{background:#fff}
+  #main{padding:0;gap:0}
+  .page{box-shadow:none;max-width:none;page-break-after:always;padding:5mm}
+}
+</style>
+</head>
+<!-- ===TEIL 1 ENDE: hier folgt direkt Teil 2 (Beginn der Seitenleiste)=== -->
+<body>
+
+<div id="side">
+  <h1>📅 KalDesigner</h1>
+  <p style="font-size:11px;color:#888;margin:0 0 10px">Foto-Kalender-Studio – TKexe-Stil</p>
+
+  <fieldset><legend>Format & Ansicht</legend>
+    <label>Ausrichtung</label>
+    <select id="orient">
+      <option value="landscape">Querformat (Standard)</option>
+      <option value="portrait">Hochformat</option>
+    </select>
+    <label>Tagesdarstellung</label>
+    <select id="tabMode">
+      <option value="grid">Tabelle (Raster)</option>
+      <option value="strip">1 Zeile (Streifen)</option>
+    </select>
+    <label>Zellenhöhe: <span id="chv"></span></label>
+    <input type="range" id="cellH" min="14" max="90" step="1">
+    <label style="font-size:10px;color:#888">Blattformat bleibt konstant – Foto füllt verbleibenden Platz.</label>
+  </fieldset>
+
+  <fieldset><legend>Foto & Titel</legend>
+    <label>Foto-Größe (Standard): <span id="psv"></span></label>
+    <input type="range" id="photoScale" min="30" max="100" step="5">
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Der Regler setzt den Standard. <strong>Shift+Klick auf ein Monatsfoto</strong> setzt eine eigene Größe nur für diesen Monat (Badge zeigt den Wert).</p>
+    <button class="btn gray" id="btnScaleReset">Individuelle Foto-Größen zurücksetzen</button>
+    
+    <hr style="border:none;border-top:1px solid #ddd;margin:12px 0">
+    <label><strong>Foto-Position (global für alle Monate)</strong></label>
+    <label>X-Versatz: <span id="photoDxv"></span></label>
+    <div class="row"><input type="range" id="photoDx" min="-200" max="200" step="1" style="flex:1"><button class="btn gray" id="photoDx_reset" style="padding:2px 8px;font-size:11px;margin:0">↺ Std</button></div>
+    <label>Y-Versatz: <span id="photoDyv"></span></label>
+    <div class="row"><input type="range" id="photoDy" min="-200" max="200" step="1" style="flex:1"><button class="btn gray" id="photoDy_reset" style="padding:2px 8px;font-size:11px;margin:0">↺ Std</button></div>
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Verschiebt das Foto auf allen Monaten gemeinsam. Individuelle Größen pro Monat bleiben davon unberührt.</p>
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Der Regler setzt den Standard. <strong>Shift+Klick auf ein Monatsfoto</strong> setzt eine eigene Größe nur für diesen Monat (Badge zeigt den Wert).</p>
+    <button class="btn gray" id="btnScaleReset">Individuelle Foto-Größen zurücksetzen</button>
+    <label class="cb" style="margin-top:6px"><input type="checkbox" id="optShowHead"> Kopfzeile oben (Monat + Linie)</label>
+    <label>Monatstitel-Position (ohne Kopfzeile)</label>
+    <select id="titlePos">
+      <option value="bl">Unten links (Standard)</option>
+      <option value="bc">Unten mittig</option>
+      <option value="br">Unten rechts</option>
+    </select>
+  </fieldset>
+
+  <fieldset><legend>Speicher & Bildqualität</legend>
+    <label>Beim Einfügen verkleinern auf</label>
+    <select id="imgQuality">
+      <option value="0">Original (keine Verkleinerung)</option>
+      <option value="6000">max. 6000 px (A3+ bei 300 dpi)</option>
+      <option value="4500">max. 4500 px (A3 bei 300 dpi)</option>
+      <option value="3000">max. 3000 px (A4 bei 300 dpi)</option>
+      <option value="1800">max. 1800 px (klein, für Tests)</option>
+    </select>
+    <label>JPEG-Qualität: <span id="jqv"></span></label>
+    <input type="range" id="jpgQ" min="70" max="98" step="1">
+    <button class="btn" id="btnResCheck">🔍 Bild-Auflösung prüfen</button>
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Bilder liegen in einer eigenen Datenbank (IndexedDB). Nur die Einstellungen bleiben im kleinen localStorage.</p>
+    <p style="font-size:11px;margin:6px 0 0">Belegter Speicher: <span id="quotaInfo">…</span></p>
+    <button class="btn gray" id="btnPersist">🔒 Speicher dauerhaft anfordern</button>
+  </fieldset>
+
+  <fieldset><legend>Textboxen unter dem Foto (pro Monat)</legend>
+    <label>Monat</label>
+    <select id="capMonth"></select>
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Jeder Monat hat eigene Textboxen. Beide Boxen starten auf derselben Höhe; mit ↺ Std setzt du einen Offset zurück. Tipp: Im Kalender direkt auf einen Text klicken, um ihn zu bearbeiten.</p>
+
+    <label><strong>Box 1 (zentriert)</strong></label>
+    <input type="text" id="t1_text" placeholder="z. B. PUCH MV 50S" style="width:100%">
+    <label>Schriftgröße: <span id="t1_sv"></span></label>
+    <input type="range" id="t1_size" min="8" max="48" step="1">
+    <label>Schrift</label>
+    <select id="t1_font">
+      <option value="'Segoe UI',Arial,sans-serif">Sans</option>
+      <option value="Georgia,'Times New Roman',serif">Serif</option>
+      <option value="'Courier New',monospace">Schreibmaschine</option>
+      <option value="'Comic Sans MS','Segoe Script',cursive">Handschrift</option>
+    </select>
+    <label>X-Offset: <span id="t1_dxv"></span></label>
+    <div class="row"><input type="range" id="t1_dx" min="-200" max="200" step="1" style="flex:1"><button class="btn gray" id="t1_dx_reset" style="padding:2px 8px;font-size:11px;margin:0">↺ Std</button></div>
+    <label>Y-Offset: <span id="t1_dyv"></span></label>
+    <div class="row"><input type="range" id="t1_dy" min="-200" max="200" step="1" style="flex:1"><button class="btn gray" id="t1_dy_reset" style="padding:2px 8px;font-size:11px;margin:0">↺ Std</button></div>
+
+    <hr style="border:none;border-top:1px solid #ddd;margin:8px 0">
+    <label><strong>Box 2 (rechtsbündig)</strong></label>
+    <input type="text" id="t2_text" placeholder="z. B. © Fotograf" style="width:100%">
+    <label>Schriftgröße: <span id="t2_sv"></span></label>
+    <input type="range" id="t2_size" min="8" max="48" step="1">
+    <label>Schrift</label>
+    <select id="t2_font">
+      <option value="'Segoe UI',Arial,sans-serif">Sans</option>
+      <option value="Georgia,'Times New Roman',serif">Serif</option>
+      <option value="'Courier New',monospace">Schreibmaschine</option>
+      <option value="'Comic Sans MS','Segoe Script',cursive">Handschrift</option>
+    </select>
+    <label>X-Offset: <span id="t2_dxv"></span></label>
+    <div class="row"><input type="range" id="t2_dx" min="-200" max="200" step="1" style="flex:1"><button class="btn gray" id="t2_dx_reset" style="padding:2px 8px;font-size:11px;margin:0">↺ Std</button></div>
+    <label>Y-Offset: <span id="t2_dyv"></span></label>
+    <div class="row"><input type="range" id="t2_dy" min="-200" max="200" step="1" style="flex:1"><button class="btn gray" id="t2_dy_reset" style="padding:2px 8px;font-size:11px;margin:0">↺ Std</button></div>
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Boxen erscheinen nur bei eingetragenem Text. Farbe = Kopfzeilen-Farbe.</p>
+  </fieldset>
+<!-- ===TEIL 2 ENDE: hier folgt Teil 3 (Deckblatt-Panel u. a.)=== -->
+  <fieldset><legend>Deckblatt (Extra-Seite vor Jänner)</legend>
+    <label class="cb"><input type="checkbox" id="optCover"> Deckblatt anzeigen</label>
+    <button class="btn gray" id="btnCoverImg">🖼️ Deckblatt-Bild wählen</button>
+    <button class="btn gray" id="btnCoverImgDel">✖ Bild entfernen</button>
+    <label>Bild-Größe (Zoom): <span id="cvImgs"></span></label>
+    <input type="range" id="cvImgScale" min="20" max="300" step="5">
+    <button class="btn gray" id="btnCvImgStd" style="padding:2px 8px;font-size:11px;margin:4px 0">↺ Standardgröße (100 %)</button>
+    <p style="font-size:10px;color:#888;margin:4px 0 0">100 % = flächendeckendes Hauptmotiv. Der Zoom verkleinert/vergrößert es zentriert – das Seitenverhältnis bleibt erhalten, bei weniger als 100 % erscheint dahinter die Hintergrundfarbe.</p>
+    <hr style="border:none;border-top:1px solid #ddd;margin:8px 0">
+
+    <label><strong>Jahreszahl (oben)</strong></label>
+    <label class="cb"><input type="checkbox" id="cvYearOn"> Jahreszahl anzeigen</label>
+    <label>Schrift</label>
+    <select id="cvYearFont">
+      <option value="'Segoe UI',Arial,sans-serif">Sans</option>
+      <option value="Georgia,'Times New Roman',serif">Serif</option>
+      <option value="'Courier New',monospace">Schreibmaschine</option>
+      <option value="'Comic Sans MS','Segoe Script',cursive">Handschrift</option>
+      <option value="Verdana,Geneva,sans-serif">Verdana</option>
+    </select>
+    <label>Stil</label>
+    <select id="cvYearStyle">
+      <option value="800">Fett (Standard)</option>
+      <option value="600">Halbfett</option>
+      <option value="400">Normal</option>
+      <option value="italic">Kursiv</option>
+    </select>
+    <div class="row"><input type="color" id="cvYearColor"><label style="margin:0">Farbe (Standard = Kopfzeilen-Farbe)</label></div>
+    <button class="btn gray" id="cvYearColorReset" style="padding:2px 8px;font-size:11px;margin:4px 0">↺ Farbe = Kopfzeilen-Farbe</button>
+    <label>Schriftgröße: <span id="cvYSv"></span> px</label>
+    <input type="range" id="cvYearSize" min="24" max="240" step="2">
+    <label>X-Offset: <span id="cvYDxv"></span></label>
+    <input type="range" id="cvYearDx" min="-300" max="300" step="1">
+    <label>Y-Offset: <span id="cvYDyv"></span></label>
+    <input type="range" id="cvYearDy" min="-300" max="300" step="1">
+
+    <hr style="border:none;border-top:1px solid #ddd;margin:8px 0">
+    <label><strong>Titel 1 (unten)</strong></label>
+    <input type="text" id="cvT1_text" placeholder="z. B. Oldtimer Club Weinviertel" style="width:100%">
+    <label>Schriftgröße: <span id="cvT1_sv"></span></label>
+    <input type="range" id="cvT1_size" min="10" max="72" step="1">
+    <label>Schrift</label>
+    <select id="cvT1_font">
+      <option value="'Segoe UI',Arial,sans-serif">Sans</option>
+      <option value="Georgia,'Times New Roman',serif">Serif</option>
+      <option value="'Courier New',monospace">Schreibmaschine</option>
+      <option value="'Comic Sans MS','Segoe Script',cursive">Handschrift</option>
+    </select>
+    <label>Ausrichtung</label>
+    <select id="cvT1_align">
+      <option value="left">Links</option>
+      <option value="center">Mittig</option>
+      <option value="right">Rechts</option>
+    </select>
+    <label>X-Offset: <span id="cvT1_dxv"></span></label>
+    <input type="range" id="cvT1_dx" min="-300" max="300" step="1">
+    <label>Y-Offset: <span id="cvT1_dyv"></span></label>
+    <input type="range" id="cvT1_dy" min="-300" max="300" step="1">
+
+    <hr style="border:none;border-top:1px solid #ddd;margin:8px 0">
+    <label><strong>Titel 2 (unten)</strong></label>
+    <input type="text" id="cvT2_text" placeholder="z. B. 2. Textzeile / © Fotograf" style="width:100%">
+    <label>Schriftgröße: <span id="cvT2_sv"></span></label>
+    <input type="range" id="cvT2_size" min="10" max="72" step="1">
+    <label>Schrift</label>
+    <select id="cvT2_font">
+      <option value="'Segoe UI',Arial,sans-serif">Sans</option>
+      <option value="Georgia,'Times New Roman',serif">Serif</option>
+      <option value="'Courier New',monospace">Schreibmaschine</option>
+      <option value="'Comic Sans MS','Segoe Script',cursive">Handschrift</option>
+    </select>
+    <label>Ausrichtung</label>
+    <select id="cvT2_align">
+      <option value="left">Links</option>
+      <option value="center">Mittig</option>
+      <option value="right">Rechts</option>
+    </select>
+    <label>X-Offset: <span id="cvT2_dxv"></span></label>
+    <input type="range" id="cvT2_dx" min="-300" max="300" step="1">
+    <label>Y-Offset: <span id="cvT2_dyv"></span></label>
+    <input type="range" id="cvT2_dy" min="-300" max="300" step="1">
+
+  </fieldset>
+  <fieldset><legend>Deckblatt-Logo</legend>
+    <button class="btn gray" id="btnCvLogoImg">🖼️ Logo-Bild wählen</button>
+    <button class="btn gray" id="btnCvLogoDel">✖ Logo entfernen</button>
+    <label>Breite: <span id="cvCLw"></span> % der Blattbreite</label>
+    <input type="range" id="cvCLw_in" min="3" max="60" step="1">
+    <label>X-Position: <span id="cvCLx"></span> %</label>
+    <input type="range" id="cvCLx_in" min="-10" max="110" step="1">
+    <label>Y-Position: <span id="cvCLy"></span> %</label>
+    <input type="range" id="cvCLy_in" min="-10" max="110" step="1">
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Eigenes Logo nur für das Deckblatt. Es lässt sich auch direkt auf dem Deckblatt mit der Maus verschieben (klicken &amp; ziehen).</p>
+  </fieldset>
+<!-- ===TEIL 3 ENDE: hier folgt Teil 4 (restliche Panels + Seitenleiste wird geschlossen)=== -->
+  <fieldset><legend>Kalender</legend>
+    <label>Jahr</label><input type="number" id="jahr" min="1990" max="2100">
+    <label>Wochenstart</label>
+    <select id="wstart"><option value="1">Montag</option><option value="0">Sonntag</option></select>
+    <label>Region (Feiertage)</label>
+    <select id="region">
+      <option value="de">Deutschland (national)</option>
+      <option value="bw">Baden-Württemberg</option>
+      <option value="by">Bayern</option>
+      <option value="at">Österreich (national)</option>
+      <option value="none">Keine Feiertage</option>
+    </select>
+  </fieldset>
+
+  <fieldset><legend>Logos 1–4 (Monatsseiten)</legend>
+    <label><strong>Logos (frei positionierbar, bis zu 4)</strong></label>
+    <select id="moLogoSel">
+      <option value="a">Logo 1</option>
+      <option value="b">Logo 2</option>
+      <option value="c">Logo 3</option>
+      <option value="d">Logo 4</option>
+    </select>
+    <button class="btn gray" id="btnMoLogoImg">🖼️ Logo-Bild wählen</button>
+    <button class="btn gray" id="btnMoLogoDel">✖ Logo entfernen</button>
+    <label>Breite: <span id="moLw"></span> % der Blattbreite</label>
+    <input type="range" id="moLw_in" min="3" max="60" step="1">
+    <label>X-Position: <span id="moLx"></span> %</label>
+    <input type="range" id="moLx_in" min="-10" max="110" step="1">
+    <label>Y-Position: <span id="moLy"></span> %</label>
+    <input type="range" id="moLy_in" min="-10" max="110" step="1">
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Erscheinen auf jeder Monatsseite (nicht auf dem Deckblatt) und lassen sich auch direkt auf einer Monatsseite mit der Maus verschieben. Die Regler gelten für das oben gewählte Logo.</p>
+  </fieldset>
+
+  <fieldset><legend>Monats-Logo (unter dem Kalender)</legend>
+    <button class="btn gray" id="btnMLogo">🖼️ Logo-Bild wählen</button>
+    <button class="btn gray" id="btnMLogoDel">✖ Logo entfernen</button>
+    <input type="file" id="mLogoFile" accept="image/*" hidden>
+    <label>Breite: <span id="mLw"></span> % der Blattbreite</label>
+    <input type="range" id="mLw_in" min="3" max="60" step="1">
+    <label>X-Versatz: <span id="mLdxv"></span></label>
+    <div class="row"><input type="range" id="mLdx" min="-300" max="300" step="1" style="flex:1"><button class="btn gray" id="mLdx_reset" style="padding:2px 8px;font-size:11px;margin:0">↺</button></div>
+    <label>Y-Versatz: <span id="mLdyv"></span></label>
+    <div class="row"><input type="range" id="mLdy" min="-100" max="100" step="1" style="flex:1"><button class="btn gray" id="mLdy_reset" style="padding:2px 8px;font-size:11px;margin:0">↺</button></div>
+    <button class="btn gray" id="btnMLogoStd">↺ Standard (zentriert, 12 % breit)</button>
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Erscheint unten auf jeder Monatsseite unter dem Kalender. Ein Logo für alle Monate.</p>
+  </fieldset>
+  <fieldset><legend>Blatthintergrund (alle Monate)</legend>
+    <div class="row"><input type="color" id="c_bg"><label style="margin:0">Hintergrundfarbe</label></div>
+    <button class="btn gray" id="btnPageBg">🖼️ Hintergrundbild wählen</button>
+    <button class="btn gray" id="btnPageBgDel">✖ Bild entfernen</button>
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Bild wird flächendeckend hinter alle Monatsseiten gelegt.</p>
+  </fieldset>
+
+  <fieldset><legend>Vorlagen</legend>
+    <label>Layout der Monatsseiten</label>
+    <select id="layout">
+      <option value="top">Foto oben (klassisch)</option>
+      <option value="bg">Foto als Seitenhintergrund</option>
+    </select>
+    <label class="cb" style="margin-top:6px"><input type="checkbox" id="optYearPage"> Jahresübersicht als Extra-Seite</label>
+  </fieldset>
+
+  <fieldset><legend>Fotorahmen & Ecken</legend>
+    <label class="cb"><input type="checkbox" id="optSoftEdge"> Weicher Rand (Verschmelzung mit Hintergrund)</label>
+    <div class="row"><input type="color" id="frameC"><label style="margin:0">Rahmenfarbe (hart)</label></div>
+    <label>Breite (Rahmen / Übergang): <span id="fwv"></span></label>
+    <input type="range" id="frameW" min="0" max="120" step="1">
+    <label>Transparenz (nur harter Rahmen): <span id="fav"></span></label>
+    <input type="range" id="frameA" min="0" max="100" step="5">
+    <label>Eckenradius: <span id="crv"></span></label>
+    <input type="range" id="cornerR" min="0" max="80" step="1">
+    <p style="font-size:10px;color:#888;margin:4px 0 0">Wirkt im weichen wie im harten Modus.</p>
+  </fieldset>
+
+  <fieldset><legend>Design</legend>
+    <div class="row"><input type="color" id="c_head"><label style="margin:0">Kopfzeile/Text</label></div>
+    <div class="row"><input type="color" id="c_weekend"><label style="margin:0">Wochenende</label></div>
+    <div class="row"><input type="color" id="c_holiday"><label style="margin:0">Feiertag</label></div>
+    <div class="row"><input type="color" id="c_grid"><label style="margin:0">Gitterlinien</label></div>
+    <label>Schrift</label>
+    <select id="font">
+      <option value="'Segoe UI',Arial,sans-serif">Sans (Standard)</option>
+      <option value="Georgia,'Times New Roman',serif">Serif</option>
+      <option value="'Courier New',monospace">Schreibmaschine</option>
+      <option value="'Comic Sans MS','Segoe Script',cursive">Handschrift</option>
+      <option value="Verdana,Geneva,sans-serif">Verdana</option>
+    </select>
+    <label>Schriftgröße: <span id="fsv"></span></label>
+    <input type="range" id="fsize" min="11" max="24" step="1">
+    <label class="cb"><input type="checkbox" id="optGrid"> Gitternetzlinien</label>
+  </fieldset>
+
+  <fieldset><legend>Zusatzfunktionen</legend>
+    <label class="cb"><input type="checkbox" id="optKw"> Kalenderwochen anzeigen</label>
+    <label class="cb"><input type="checkbox" id="optMoon"> Mondphasen anzeigen</label>
+    <label class="cb"><input type="checkbox" id="optSunday"> Sonntage als Feiertag heben</label>
+    <label class="cb"><input type="checkbox" id="optToday"> Heutiges Datum hervorheben</label>
+  </fieldset>
+
+  <fieldset><legend>JPEG-Export (sRGB, 300 dpi)</legend>
+    <label>Blatt</label>
+    <select id="expMonth"><option value="cover">Deckblatt</option></select>
+    <label>Papierformat</label>
+    <select id="expPaper">
+      <option value="a4">A4</option>
+      <option value="a3">A3</option>
+    </select>
+    <label class="cb"><input type="checkbox" id="expBleed"> 3 mm Beschnittrand rundum</label>
+    <button class="btn" id="btnExpMonth">🖼️ Blatt als JPEG</button>
+    <button class="btn" id="btnExpAll">🗂️ Deckblatt + 12 Monate als JPEG</button>
+    <button class="btn" id="btnExpYear">🗺️ Jahresübersicht als JPEG</button>
+    <p style="font-size:11px;color:#888;margin:6px 0 0">Export in exakt 300 dpi im sRGB-Farbraum. Beim Serienexport ggf. die Browserfrage zu mehreren Downloads bestätigen.</p>
+  </fieldset>
+
+  <fieldset><legend>Aktionen</legend>
+    <button class="btn" onclick="window.print()">🖨️ Drucken / PDF</button>
+    <button class="btn gray" id="btnSave">💾 Projekt speichern</button>
+    <button class="btn gray" id="btnLoad">📂 Projekt laden</button>
+    <button class="btn gray" id="btnReset">🗑️ Fotos & Termine löschen</button>
+    <input type="file" id="loadFile" accept=".json" hidden>
+    <input type="file" id="pageBgFile" accept="image/*" hidden>
+    <input type="file" id="coverImgFile" accept="image/*" hidden>
+    <input type="file" id="moLogoImgFile" accept="image/*" hidden>
+    <input type="file" id="cvLogoImgFile" accept="image/*" hidden>
+    <p style="font-size:11px;color:#888;margin-top:8px">
+      Tipp: Auf einen Tag klicken, um eine Notiz/einen Termin einzutragen. Klick aufs Foto = Bild wählen, Shift+Klick = individuelle Größe.
+    </p>
+  </fieldset>
+</div>
+
+<div id="main"></div>
+
+<!-- Auflösungs-Prüfdialog -->
+<div id="resOverlay">
+  <div id="resBox">
+    <h2>🔍 Bild-Auflösung prüfen</h2>
+    <p id="resIntro" style="font-size:12px;color:#555;margin:0 0 6px"></p>
+    <div class="res-bar">
+      <label style="margin:0">Papier:</label>
+      <select id="resPaper" style="width:auto">
+        <option value="a4">A4</option>
+        <option value="a3">A3</option>
+      </select>
+      <span style="font-size:12px;color:#888">Sortierung: schwächster Wert zuerst · Ampel: 300 dpi (grün), ab 200 dpi (gelb), darunter (rot)</span>
+    </div>
+    <table id="resTable"></table>
+    <div class="res-bar"><button class="btn" id="btnResClose">Schließen</button></div>
+  </div>
+</div>
+<!-- ===TEIL 4 ENDE: hier folgt Teil 5 (Beginn JavaScript: Zustand, Migration, IndexedDB)=== -->
+
+<script>
+"use strict";
+const MONTHS=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+const WD_MON=["Mo","Di","Mi","Do","Fr","Sa","So"], WD_SUN=["So","Mo","Di","Mi","Do","Fr","Sa"];
+
+/* ANKER: state-defaults */
+/* ---------------- Zustand ---------------- */
+const DEFAULTS={
+  year:new Date().getFullYear()+1, wstart:1, region:"de",
+  orientation:"landscape", tabMode:"grid", cellH:74,
+  photoScale:1, photoDx:0, photoDy:0, cornerR:0, showHead:false, titlePos:"bl",
+  c_head:"#2c3e50", c_bg:"#ffffff", c_weekend:"#c0392b", c_holiday:"#c0392b", c_grid:"#cccccc",
+  font:"'Segoe UI',Arial,sans-serif", fsize:15, grid:true,
+  layout:"top", yearPage:true, kw:false, moon:false, sunday:false, today:true,
+  coverPage:true,
+  pageBg:null, monthLogo:{src:null,w:12,dx:0,dy:0}, frameW:60, frameC:"#ffffff", frameA:0.55, softEdge:true,
+  photoScales:{},
+  imgQuality:4500, jpgQ:92,
+  captions:null, cover:null,
+  images:{}, events:{}
+};
+let state=Object.assign({},DEFAULTS);
+try{ const s=localStorage.getItem("kaldesigner"); if(s) state=Object.assign(state,JSON.parse(s)); }catch(e){}
+
+function normalizeState(){
+  if(typeof state.photoScale!=="number"||isNaN(state.photoScale)||state.photoScale<=0)state.photoScale=1;
+  if(state.photoScale>1.001)state.photoScale=state.photoScale/100;
+  state.photoScale=Math.min(1,Math.max(0.3,state.photoScale));
+  if(typeof state.photoScales!=="object"||!state.photoScales||Array.isArray(state.photoScales))state.photoScales={};
+
+  /* --- Migration: Textboxen pro Monat (war vorher global) --- */
+  const DEF_CAP={text:"",size:16,font:"'Segoe UI',Arial,sans-serif",dx:0,dy:0};
+  if(typeof state.captions!=="object"||!state.captions||Array.isArray(state.captions)){
+    const lg1=(typeof state.txt1==="object"&&state.txt1)?state.txt1:null;
+    const lg2=(typeof state.txt2==="object"&&state.txt2)?state.txt2:null;
+    const c={};
+    for(let m=0;m<12;m++)c[m]={txt1:Object.assign({},DEF_CAP,lg1||{}),txt2:Object.assign({},DEF_CAP,lg2||{})};
+    state.captions=c;
+  }
+  for(let m=0;m<12;m++){
+    if(!state.captions[m])state.captions[m]={txt1:Object.assign({},DEF_CAP),txt2:Object.assign({},DEF_CAP)};
+    else{
+      state.captions[m].txt1=Object.assign({},DEF_CAP,state.captions[m].txt1);
+      state.captions[m].txt2=Object.assign({},DEF_CAP,state.captions[m].txt2);
+    }
+  }
+
+  /* --- Deckblatt (Defaults + Migration) --- */
+  const DEF_COVER={
+    img:null, imgScale:1, yearShow:true, yearSize:110, yearDx:0, yearDy:0,
+    yearFont:"'Segoe UI',Arial,sans-serif", yearStyle:"800", yearColor:"",
+    t1:{text:"",size:32,font:"Georgia,'Times New Roman',serif",align:"left",dx:0,dy:0},
+    t2:{text:"",size:18,font:"'Segoe UI',Arial,sans-serif",align:"left",dx:0,dy:0},
+    logo:{src:null,x:83,y:86,w:14}
+  };
+  /* Logos 1–4 gelten nur für die Monatsseiten (x/y = linke obere Ecke in % der Blattgröße) */
+  const DEF_LOGOS={
+    a:{src:null,x:3,y:86,w:14},  b:{src:null,x:83,y:86,w:14},
+    c:{src:null,x:3,y:8,w:10},   d:{src:null,x:83,y:8,w:10}
+  };
+  if(typeof state.cover!=="object"||!state.cover||Array.isArray(state.cover))state.cover=JSON.parse(JSON.stringify(DEF_COVER));
+  ["t1","t2"].forEach(k=>{
+    if(!state.cover[k]||typeof state.cover[k]!=="object")state.cover[k]=JSON.parse(JSON.stringify(DEF_COVER[k]));
+    else state.cover[k]=Object.assign({},DEF_COVER[k],state.cover[k]);
+  });
+
+  /* Migration: Jahreszahl-Optionen am Deckblatt (neu) */
+  if(typeof state.cover.yearShow!=="boolean")state.cover.yearShow=true;
+  if(typeof state.cover.yearFont!=="string"||!state.cover.yearFont)state.cover.yearFont="'Segoe UI',Arial,sans-serif";
+  if(typeof state.cover.yearStyle!=="string"||!state.cover.yearStyle)state.cover.yearStyle="800";
+  if(typeof state.cover.yearColor!=="string")state.cover.yearColor="";
+  /* Migration: Foto-X/Y-Offset (neu) */
+  if(typeof state.photoDx!=="number"||isNaN(state.photoDx))state.photoDx=0;
+  if(typeof state.photoDy!=="number"||isNaN(state.photoDy))state.photoDy=0;
+  if(typeof state.monthLogo!=="object"||!state.monthLogo||Array.isArray(state.monthLogo))state.monthLogo={src:null,w:12,dx:0,dy:0};
+  else state.monthLogo=Object.assign({src:null,w:12,dx:0,dy:0},state.monthLogo);
+  if(typeof state.cover.imgScale!=="number"||isNaN(state.cover.imgScale)||state.cover.imgScale<0.2||state.cover.imgScale>3)state.cover.imgScale=1;
+  /* Migration: Logos 1–4 wandern vom Deckblatt auf die Monatsseiten (state.logos);
+     das Deckblatt bekommt ein eigenes Logo (state.cover.logo) */
+  if(!state.logos||typeof state.logos!=="object"||Array.isArray(state.logos)){
+    state.logos=(state.cover.logos&&typeof state.cover.logos==="object")
+      ? JSON.parse(JSON.stringify(state.cover.logos))
+      : JSON.parse(JSON.stringify(DEF_LOGOS));
+  }
+  ["a","b","c","d"].forEach(k=>{
+    state.logos[k]=Object.assign({},DEF_LOGOS[k],(state.logos[k]&&typeof state.logos[k]==="object")?state.logos[k]:{});
+  });
+  delete state.cover.logos;
+  state.cover.logo=Object.assign({},DEF_COVER.logo,(state.cover.logo&&typeof state.cover.logo==="object")?state.cover.logo:{});
+
+  if(typeof state.imgQuality!=="number")state.imgQuality=4500;
+  if(typeof state.jpgQ!=="number")state.jpgQ=92;
+}
+normalizeState();
+
+/* ---------------- Medien-Speicher (IndexedDB) ---------------- */
+const IDB_NAME="kaldesigner-media", IDB_STORE="media";
+let IMGREADY=false, IDB_OK=true, mediaTimer=null;
+
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const rq=indexedDB.open(IDB_NAME,1);
+    rq.onupgradeneeded=()=>{ const db=rq.result; if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE); };
+    rq.onsuccess=()=>res(rq.result);
+    rq.onerror=()=>rej(rq.error||new Error("IndexedDB nicht verfügbar"));
+  });
+}
+function idbReadAll(){
+  return idbOpen().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(IDB_STORE,"readonly"), st=tx.objectStore(IDB_STORE);
+    const kr=st.getAllKeys(), vr=st.getAll();
+    tx.oncomplete=()=>{ const o={}; for(let i=0;i<kr.result.length;i++)o[kr.result[i]]=vr.result[i]; res(o); };
+    tx.onerror=()=>rej(tx.error);
+  }));
+}
+function idbWriteAll(obj){
+  return idbOpen().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(IDB_STORE,"readwrite"), st=tx.objectStore(IDB_STORE);
+    st.clear();
+    Object.keys(obj).forEach(k=>st.put(obj[k],k));
+    tx.oncomplete=()=>res();
+    tx.onerror=()=>rej(tx.error);
+    tx.onabort=()=>rej(tx.error||new Error("Schreiben abgebrochen"));
+  }));
+}
+function collectMedia(){
+  const o={};
+  for(let m=0;m<12;m++) if(state.images[m]) o["m"+m]=state.images[m];
+  if(state.cover.img) o["cover"]=state.cover.img;
+  ["a","b","c","d"].forEach(k=>{ if(state.logos[k].src) o["logo:"+k]=state.logos[k].src; });
+  if(state.cover.logo.src) o["clogo"]=state.cover.logo.src;
+  if(state.pageBg) o["pagebg"]=state.pageBg;
+  if(state.monthLogo&&state.monthLogo.src) o["mlogo"]=state.monthLogo.src;
+  return o;
+}
+function applyMedia(o){
+  state.images={};
+  for(let m=0;m<12;m++) if(o["m"+m]) state.images[m]=o["m"+m];
+  state.cover.img=o["cover"]||null;
+  ["a","b","c","d"].forEach(k=>{ state.logos[k].src=o["logo:"+k]||null; });
+  state.cover.logo.src=o["clogo"]||null;
+  state.pageBg=o["pagebg"]||null;
+  if(state.monthLogo)state.monthLogo.src=o["mlogo"]||null;
+}
+function hasMedia(){
+  for(let m=0;m<12;m++) if(state.images[m]) return true;
+  if(state.cover.img||state.pageBg||state.cover.logo.src) return true;
+  return ["a","b","c","d"].some(k=>state.logos[k].src);
+}
+
+/* Einstellungen ohne Bilddaten sichern (winzig, schnell) */
+function persistMeta(){
+  if(!IDB_OK){                                  /* Fallback: alter Weg */
+    try{ localStorage.setItem("kaldesigner",JSON.stringify(state)); }
+    catch(e){ alert("Speicher voll – bitte Bilder verkleinern."); }
+    return;
+  }
+  const bak={images:state.images, pageBg:state.pageBg, coverImg:state.cover.img, clSrc:state.cover.logo.src, logos:{}, mlSrc:(state.monthLogo?state.monthLogo.src:null)};
+  state.images={}; state.pageBg=null; state.cover.img=null; state.cover.logo.src=null;
+  if(state.monthLogo)state.monthLogo.src=null;
+  ["a","b","c","d"].forEach(k=>{ bak.logos[k]=state.logos[k].src; state.logos[k].src=null; });
+  try{ localStorage.setItem("kaldesigner",JSON.stringify(state)); }
+  catch(e){ console.warn("Metadaten nicht gespeichert:",e); }
+  finally{
+    state.images=bak.images; state.pageBg=bak.pageBg; state.cover.img=bak.coverImg; state.cover.logo.src=bak.clSrc;
+    ["a","b","c","d"].forEach(k=>{ state.logos[k].src=bak.logos[k]; });
+    if(state.monthLogo)state.monthLogo.src=bak.mlSrc;
+  }
+}
+function saveMedia(){
+  if(!IMGREADY||!IDB_OK) return Promise.resolve();
+  return idbWriteAll(collectMedia()).catch(e=>{
+    console.warn(e);
+    alert("Bilder konnten nicht gespeichert werden: "+(e&&e.message?e.message:e));
+  });
+}
+function persist(){
+  if(!IMGREADY) return;
+  persistMeta();
+  if(mediaTimer) clearTimeout(mediaTimer);
+  mediaTimer=setTimeout(()=>{ mediaTimer=null; saveMedia(); },300);
+}
+async function persistNow(){
+  if(!IMGREADY) return;
+  persistMeta();
+  if(mediaTimer){ clearTimeout(mediaTimer); mediaTimer=null; }
+  await saveMedia();
+}
+// ===TEIL 5 ENDE: hier folgt Teil 6 (Hilfsfunktionen, Feiertage, Mondphase, Rendering Vorschau)===
+
+/* ---------------- Hilfsfunktionen ---------------- */
+function hexRGBA(hex,a){
+  const h=String(hex).replace("#","");
+  const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16);
+  return "rgba("+r+","+g+","+b+","+a+")";
+}
+function dimsFor(paper,orient){
+  const D={a4:[210,297], a3:[297,420]};
+  let w=D[paper][0], h=D[paper][1];
+  if(orient==="landscape"){ const t=w; w=h; h=t; }
+  return [w,h];
+}
+function srgbContext(cv){
+  try{ return cv.getContext("2d",{colorSpace:"srgb"}); }
+  catch(e){ return cv.getContext("2d"); }
+}
+function roundRectPath(g,r,x,y,w,h){
+  r=Math.max(0,Math.min(r,Math.min(w,h)/2));
+  g.moveTo(x+r,y);
+  g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r);
+  g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r);
+  g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y);
+  g.closePath();
+}
+function applySoftMask(im,f){
+  const mi=[
+    "linear-gradient(to right, transparent 0, #000 "+f+"px)",
+    "linear-gradient(to left, transparent 0, #000 "+f+"px)",
+    "linear-gradient(to bottom, transparent 0, #000 "+f+"px)",
+    "linear-gradient(to top, transparent 0, #000 "+f+"px)"
+  ].join(",");
+  im.style.maskImage=mi; im.style.webkitMaskImage=mi;
+  im.style.maskComposite="intersect"; im.style.webkitMaskComposite="source-in";
+}
+function featherImg(img,w,h,f,radius){
+  const ow=Math.max(1,Math.round(w)), oh=Math.max(1,Math.round(h));
+  const oc=document.createElement("canvas"); oc.width=ow; oc.height=oh;
+  const og=srgbContext(oc);
+  drawCoverAt(og,img,0,0,ow,oh);
+  if(radius>0){
+    const mc=document.createElement("canvas"); mc.width=ow; mc.height=oh;
+    const mg=srgbContext(mc);
+    mg.fillStyle="#fff"; mg.beginPath();
+    roundRectPath(mg,radius,0,0,ow,oh); mg.fill();
+    og.globalCompositeOperation="destination-in";
+    og.drawImage(mc,0,0);
+  }
+  f=Math.min(f,Math.min(ow,oh)/2-1);
+  if(f>0){
+    og.globalCompositeOperation="destination-out";
+    const fade=(x0,y0,x1,y1)=>{const gr=og.createLinearGradient(x0,y0,x1,y1);gr.addColorStop(0,"rgba(0,0,0,1)");gr.addColorStop(1,"rgba(0,0,0,0)");return gr;};
+    og.fillStyle=fade(0,0,f,0);     og.fillRect(0,0,f,oh);
+    og.fillStyle=fade(ow,0,ow-f,0); og.fillRect(ow-f,0,f,oh);
+    og.fillStyle=fade(0,0,0,f);     og.fillRect(0,0,ow,f);
+    og.fillStyle=fade(0,oh,0,oh-f); og.fillRect(0,oh-f,ow,f);
+  }
+  og.globalCompositeOperation="source-over";
+  return oc;
+}
+
+/* ---------------- Bild einlesen mit Qualitätswahl ---------------- */
+function readImageScaled(file,maxDim,cb,forcePng){
+  const q=Math.min(98,Math.max(70,state.jpgQ||92))/100;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const raw=rd.result, img=new Image();
+    img.onload=()=>{
+      const isPng=forcePng||file.type==="image/png";
+      let w=img.width, h=img.height;
+      const sc=maxDim>0?Math.min(1,maxDim/Math.max(w,h)):1;
+      /* Logos (forcePng) und GIFs immer über Canvas in statisches PNG wandeln –
+         die Roh-Durchreiche bleibt nur normalen JPG/PNG-Fotos vorbehalten */
+      if(!forcePng&&file.type!=="image/gif"&&sc>=1&&raw.length<2.5e6){ cb(raw); return; }
+      w=Math.max(1,Math.round(w*sc)); h=Math.max(1,Math.round(h*sc));
+      const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      const g=cv.getContext("2d");
+      g.imageSmoothingEnabled=true; g.imageSmoothingQuality="high";
+      g.drawImage(img,0,0,w,h);
+      cb(isPng?cv.toDataURL("image/png"):cv.toDataURL("image/jpeg",q));
+    };
+    img.onerror=()=>{
+      alert("Bild konnte vom Browser nicht dekodiert werden.\nMöglicherweise ist die Datei beschädigt oder trägt nur die Endung .gif, ist aber kein gültiges Bild-Format.");
+      cb(null);
+    };
+    img.src=raw;
+
+  };
+  rd.readAsDataURL(file);
+}
+
+/* ---------------- Feiertagslogik ---------------- */
+function easter(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
+        g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,
+        l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451);
+  return new Date(y,Math.floor((h+l-7*m+114)/31)-1,((h+l-7*m+114)%31)+1);
+}
+/* ANKER: feiertage */
+function holidays(y,region){
+  if(region==="none")return{};
+  const H={}, add=(dt,n)=>H[dt.getFullYear()+"-"+dt.getMonth()+"-"+dt.getDate()]=n;
+  const E=easter(y), off=(o)=>new Date(E.getFullYear(),E.getMonth(),E.getDate()+o);
+  if(region==="at"){
+    add(new Date(y,0,1),"Neujahr");            add(new Date(y,0,6),"Hl. Drei Könige");
+    add(off(1),"Ostermontag");                 add(new Date(y,4,1),"Tag der Arbeit");
+    add(off(39),"Christi Himmelfahrt");         add(off(50),"Pfingstmontag");
+    add(off(60),"Fronleichnam");                add(new Date(y,7,15),"Mariä Himmelfahrt");
+    add(new Date(y,9,26),"Nationalfeiertag");   add(new Date(y,10,1),"Allerheiligen");
+    add(new Date(y,11,8),"Mariä Empfängnis");   add(new Date(y,11,25),"1. Weihnachtstag");
+    add(new Date(y,11,26),"2. Weihnachtstag");
+    return H;
+  }
+  add(new Date(y,0,1),"Neujahr"); add(new Date(y,4,1),"Tag der Arbeit");
+  add(new Date(y,9,3),"Tag der Dt. Einheit"); add(new Date(y,11,25),"1. Weihnachtstag");
+  add(new Date(y,11,26),"2. Weihnachtstag");
+  if(region==="bw"||region==="by"){ add(new Date(y,0,6),"Hl. Drei Könige"); add(new Date(y,10,1),"Allerheiligen"); }
+  add(off(-2),"Karfreitag"); add(off(1),"Ostermontag"); add(off(39),"Christi Himmelfahrt");
+  add(off(50),"Pfingstmontag");
+  if(region==="bw"){
+    const d=new Date(y,10,22); d.setDate(22-((d.getDay()-3+7)%7)); add(d,"Buß- und Bettag");
+  }
+  return H;
+}
+
+/* ---------------- Mondphase ---------------- */
+function moonIcon(dt){
+  const SYN=29.530588853, ref=Date.UTC(2000,0,6,18,14);
+  let p=((Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate())-ref)/86400000)%SYN;
+  if(p<0)p+=SYN; p/=SYN;
+  if(p<.03||p>.97)return"🌑"; if(p<.22)return"🌒"; if(p<.28)return"🌓";
+  if(p<.47)return"🌔"; if(p<.53)return"🌕"; if(p<.72)return"🌖"; if(p<.78)return"🌗"; return"🌘";
+}
+function isoWeek(dt){
+  const d=new Date(Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate()));
+  d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));
+  const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil(((d-ys)/86400000+1)/7);
+}
+
+/* ---------------- Rendering (Vorschau) ---------------- */
+function applyTheme(){
+  const r=document.documentElement.style;
+  r.setProperty("--c-head",state.c_head); r.setProperty("--c-bg",state.c_bg);
+  r.setProperty("--c-weekend",state.c_weekend); r.setProperty("--c-holiday",state.c_holiday);
+  r.setProperty("--c-grid",state.grid?state.c_grid:"transparent");
+  r.setProperty("--font",state.font); r.setProperty("--fs",state.fsize+"px");
+  r.setProperty("--cellh",state.cellH+"px");
+}
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+
+/* ANKER: foto-einfuegen */
+function pickImage(m){
+  const inp=document.createElement("input"); inp.type="file"; inp.accept="image/*";
+  inp.onchange=()=>{ const f=inp.files[0]; if(!f)return;
+    readImageScaled(f,state.imgQuality,(data)=>{ state.images[m]=data; persist(); render(); });
+  };
+  inp.click();
+}
+function editDay(key,dt){
+  const cur=state.events[key]||"";
+  const v=prompt("Notiz/Termin für "+dt.toLocaleDateString("de-DE")+":",cur);
+  if(v===null)return;
+  if(v.trim())state.events[key]=v.trim(); else delete state.events[key];
+  persist(); render();
+}
+function setPageBg(page,monthlyImg){
+  const src=(state.layout==="bg"&&monthlyImg)?monthlyImg:state.pageBg;
+  if(src){ page.style.backgroundImage="url("+src+")"; page.style.backgroundSize="cover"; page.style.backgroundPosition="center"; }
+  else{ page.style.backgroundImage=""; }
+}
+
+/* Klick auf Textbox im Blatt: Monat im Panel auswählen + Text bearbeiten */
+function editCaption(m,box){
+  const cap=state.captions[m], t=cap[box];
+  const v=prompt("Text für "+MONTHS[m]+" "+state.year+" (Box "+(box==="txt1"?"1 – zentriert":"2 – rechts")+", leer = entfernen):",t.text);
+  if(v===null)return;
+  t.text=v;
+  setCapMonth(m);          /* Panel auf diesen Monat umschalten */
+  persist(); render();
+}
+function setCapMonth(m){
+  document.getElementById("capMonth").value=String(m);
+  updateCapPanel(m);
+}
+
+function miniMonthDOM(m,H){
+  const y=state.year, ws=+state.wstart, wd=ws===1?WD_MON:WD_SUN;
+  const box=el("div","mini");
+  box.append(el("h3",null,MONTHS[m]));
+  const mg=el("div","mg");
+  wd.forEach(w=>mg.append(el("span","wd",w[0])));
+  const first=new Date(y,m,1);
+  const lead=(first.getDay()-ws+7)%7, dim=new Date(y,m+1,0).getDate();
+  for(let i=0;i<lead;i++)mg.append(el("span"));
+  for(let d=1;d<=dim;d++){
+    const dt=new Date(y,m,d), key=dt.getFullYear()+"-"+dt.getMonth()+"-"+dt.getDate();
+    const hName=H[key], sun=dt.getDay()===0;
+    const sp=el("span",null,String(d));
+    const isWe=(ws===1&&(dt.getDay()===6||sun))||(ws===0&&sun);
+    if(isWe)sp.style.color="var(--c-weekend)";
+    if(hName||(state.sunday&&sun))sp.style.color="var(--c-holiday)";
+    if(hName)sp.title=hName;
+    if(state.events[key])sp.style.fontWeight="700";
+    mg.append(sp);
+  }
+  box.append(mg);
+  return box;
+}
+
+/* Jahresübersicht: KEIN festes Seitenverhältnis mehr –
+   die Seite wächst mit dem Inhalt, nichts überlappt mehr */
+function renderYear(H){
+  const page=el("div","page");
+  page.style.maxWidth=(state.orientation==="landscape")?"1060px":"820px";
+  setPageBg(page,null);
+  const head=el("div","pagehead");
+  head.append(el("span","mname","Jahresübersicht"), el("span","mmeta",String(state.year)));
+  page.append(head);
+  const grid=el("div","ygrid");
+  grid.style.marginTop="10px";
+  for(let m=0;m<12;m++)grid.append(miniMonthDOM(m,H));
+  page.append(grid);
+  return page;
+}
+// ===TEIL 6 ENDE: hier folgt Teil 7 (Deckblatt-Vorschau, Monatsseite, render())===
+
+function photoScaleFor(m){
+  const s=state.photoScales[m];
+  return (typeof s==="number"&&!isNaN(s)&&s>=0.3&&s<=1)?s:state.photoScale;
+}
+/* Gemeinsames Verschieben per Maus (Logo auf Deckblatt oder Monatsseite);
+   x/y = linke obere Ecke in % der Blattgröße, wie in Vorschau und Export */
+function attachLogoDrag(im,page,L,done){
+  im.addEventListener("click",ev=>ev.stopPropagation());
+  im.addEventListener("mousedown",(ev)=>{
+    ev.preventDefault();
+    const rect=page.getBoundingClientRect();
+    let moved=false;
+    const mv=(e2)=>{
+      const nx=((e2.clientX-rect.left)/rect.width)*100 - L.w/2;
+      const ny=((e2.clientY-rect.top)/rect.height)*100;
+      L.x=Math.round(Math.min(110,Math.max(-10,nx))*10)/10;
+      L.y=Math.round(Math.min(110,Math.max(-10,ny))*10)/10;
+      moved=true;
+      im.style.left=L.x+"%";
+      im.style.top=L.y+"%";
+    };
+    const up=()=>{
+      document.removeEventListener("mousemove",mv);
+      document.removeEventListener("mouseup",up);
+      if(moved){ persist(); done(); }
+    };
+    document.addEventListener("mousemove",mv);
+    document.addEventListener("mouseup",up);
+  });
+}
+/* Logos 1–4: auf jeder Monatsseite, frei positionierbar */
+function appendMoLogos(page){
+  ["a","b","c","d"].forEach((k,i)=>{
+    const L=state.logos[k];
+    if(!L||!L.src)return;
+    const im=el("img","mo-logo");
+    im.onerror=()=>{
+      if(!L.src)return;
+      console.warn("Logo "+(i+1)+" konnte nicht geladen werden:",String(L.src).slice(0,50)+"...");
+      L.src=null;
+      persist();
+      render();
+    };
+    im.src=L.src;
+    im.style.left=L.x+"%";
+    im.style.top=L.y+"%";
+    im.style.width=L.w+"%";
+    im.title="Logo "+(i+1)+": ziehen zum Verschieben (gilt für alle Monate) – Größe über die Regler";
+    attachLogoDrag(im,page,L,()=>{ if(window.updateMoLogoPanel)window.updateMoLogoPanel(); render(); });
+    page.append(im);
+  });
+}
+function appendMLogo(page){
+  const L=state.monthLogo;
+  if(!L||!L.src)return;
+  const d=el("div");
+  d.style.cssText="flex:0 0 auto;margin-top:8px;text-align:center";
+  const im=el("img");
+  im.src=L.src;
+  im.style.cssText="display:inline-block;width:"+L.w+"%;transform:translate("+L.dx+"px,"+L.dy+"px)";
+  d.append(im);
+  page.append(d);
+}
+/* Höhe des Textbox-Bereichs für einen Monat (größter Text, da Boxen übereinander liegen) */
+function capHFor(m){
+  const cap=state.captions[m];
+  let h=0;
+  [cap.txt1,cap.txt2].forEach(t=>{ if(t.text&&t.text.trim()) h=Math.max(h,t.size); });
+  return h?h+8:0;
+}
+
+/* ---------------- Deckblatt (Vorschau) ---------------- */
+function renderCover(){
+  const c=state.cover;
+  const page=el("div","page cover");
+  page.style.maxWidth=(state.orientation==="landscape")?"1060px":"820px";
+  page.style.aspectRatio=(state.orientation==="landscape")?"297/210":"210/297";
+
+  /* Hauptbild – zentriert, skalierbar (Format bleibt erhalten) */
+  if(c.img){
+    const im=el("img","cv-photo");
+    im.src=c.img;
+    im.alt="Deckblatt-Bild";
+    im.style.width=Math.round(c.imgScale*100)+"%";
+    im.style.height=Math.round(c.imgScale*100)+"%";
+    page.append(im);
+  }
+
+  /* Jahreszahl oben (optional, eigene Schrift/Farbe/Stil) */
+  if(c.yearShow){
+    const ital=(c.yearStyle==="italic");
+    const yr=el("div","cv-year",String(state.year));
+    yr.style.fontSize=c.yearSize+"px";
+    yr.style.fontFamily=c.yearFont;
+    yr.style.fontWeight=ital?"600":c.yearStyle;
+    yr.style.fontStyle=ital?"italic":"normal";
+    yr.style.color=c.yearColor||"var(--c-head)";
+    yr.style.transform="translate(calc(-50% + "+c.yearDx+"px), "+c.yearDy+"px)";
+    yr.title="Jahreszahl – Position/Größe/Schrift über das Deckblatt-Panel einstellbar";
+    page.append(yr);
+  }
+
+  /* Titel unten */
+  [["t1",52],["t2",14]].forEach(pair=>{
+    const t=c[pair[0]], baseBottom=pair[1];
+    if(!(t.text&&t.text.trim()))return;
+    const d=el("div","cv-t",t.text);
+    d.style.fontSize=t.size+"px";
+    d.style.fontFamily=t.font;
+    d.style.textAlign=t.align;
+    d.style.bottom="calc("+baseBottom+"px + "+t.dy+"px)";
+    if(t.align==="left"){ d.style.left="24px"; d.style.right="auto"; }
+    else if(t.align==="center"){ d.style.left="20%"; d.style.right="20%"; }
+    else{ d.style.right="24px"; d.style.left="auto"; }
+    d.style.transform="translateX("+t.dx+"px)";
+    page.append(d);
+  });
+
+  /* Deckblatt-Logo – frei verschiebbar per Maus */
+  {
+    const L=c.logo;
+    if(L.src){
+      const im=el("img","cv-logo");
+      im.onerror=()=>{
+        if(!L.src)return;
+        console.warn("Deckblatt-Logo konnte nicht geladen werden:",String(L.src).slice(0,50)+"...");
+        L.src=null;
+        persist();
+        render();
+      };
+      im.src=L.src;
+      im.style.left=L.x+"%";
+      im.style.top=L.y+"%";
+      im.style.width=L.w+"%";
+      im.title="Deckblatt-Logo: ziehen zum Verschieben – Größe über die Regler";
+      attachLogoDrag(im,page,L,()=>{ if(window.updateCvLogoPanel)window.updateCvLogoPanel(); });
+      page.append(im);
+    }
+  }
+  return page;
+}
+
+function renderMonth(m,H,todayKey){
+  const y=state.year, ws=+state.wstart, wd=ws===1?WD_MON:WD_SUN;
+  const page=el("div","page");
+  page.style.maxWidth=(state.orientation==="landscape")?"1060px":"820px";
+  page.style.aspectRatio=(state.orientation==="landscape")?"297/210":"210/297";
+
+  if(state.showHead){
+    const head=el("div","pagehead");
+    head.append(el("span","mname",MONTHS[m]), el("span","mmeta",String(y)));
+    page.append(head);
+  }
+
+  /* ANKER: foto-rendering */
+  const phArea=el("div","ph-area");
+  if(state.layout==="top"){
+    const ph=el("div","photo");
+    const pct=Math.round(photoScaleFor(m)*100)+"%";
+    ph.style.width=pct; ph.style.height=pct;
+    ph.style.borderRadius=state.cornerR+"px";
+    ph.style.transform="translate("+state.photoDx+"px,"+state.photoDy+"px)";
+    if(state.softEdge){
+      ph.style.padding="0"; ph.style.background="none";
+    }else{
+      ph.style.backgroundColor=hexRGBA(state.frameC,state.frameA);
+      ph.style.padding=state.frameW+"px";
+    }
+    const inner=el("div","ph-inner");
+    if(state.images[m]){
+      if(state.softEdge)inner.style.background="none";
+      const im=el("img"); im.src=state.images[m];
+      im.style.borderRadius=state.cornerR+"px";
+      if(state.softEdge)applySoftMask(im,Math.min(state.frameW,120));
+      inner.append(im);
+    }
+    else inner.append(el("span","hint","📷 Foto für "+MONTHS[m]+" wählen (klicken)"));
+    ph.append(inner);
+    if(state.photoScales[m]!==undefined){
+      const badge=el("span",null,"⤢ "+Math.round(photoScaleFor(m)*100)+"%");
+      badge.style.position="absolute";
+      badge.style.bottom="6px"; badge.style.right="8px";
+      badge.style.background="rgba(0,0,0,.55)"; badge.style.color="#fff";
+      badge.style.fontSize="11px"; badge.style.padding="2px 6px";
+      badge.style.borderRadius="4px"; badge.style.pointerEvents="none";
+      ph.append(badge);
+    }
+    ph.title="Klick = Foto wählen · Shift+Klick = individuelle Größe (aktuell "+Math.round(photoScaleFor(m)*100)+"%)";
+    ph.onclick=(ev)=>{
+      if(ev.shiftKey){
+        const cur=Math.round(photoScaleFor(m)*100);
+        const v=prompt("Individuelle Foto-Größe für "+MONTHS[m]+" "+state.year+" in Prozent (30–100).\nLeer lassen oder 'Std' eingeben = Standard-Regler verwenden:",cur);
+        if(v===null)return;
+        const t=v.trim();
+        if(t===""||t.toLowerCase()==="std"||t.toLowerCase()==="standard"){
+          delete state.photoScales[m];
+        }else{
+          let f=+t/100;
+          if(isNaN(f))f=state.photoScale;
+          state.photoScales[m]=Math.min(1,Math.max(0.3,f));
+        }
+        persist(); render();
+      }else{
+        pickImage(m);
+      }
+    };
+    phArea.append(ph);
+  }
+  page.append(phArea);
+
+  /* Textboxen unter dem Foto – beide Boxen auf gemeinsamer Grundlinie */
+  const capH=capHFor(m);
+  if(capH>0){
+    const cap=state.captions[m];
+    const caps=el("div");
+    caps.style.cssText="flex:0 0 auto;position:relative;height:"+capH+"px;margin-bottom:8px";
+    [[cap.txt1,"center","txt1"],[cap.txt2,"right","txt2"]].forEach(item=>{
+      const t=item[0], align=item[1], box=item[2];
+      if(!(t.text&&t.text.trim()))return;
+      const wrap=el("div");
+      wrap.style.cssText="position:absolute;top:0;left:0;right:0;text-align:"+align+
+        ";transform:translate("+t.dx+"px,"+t.dy+"px);pointer-events:none";
+      const d=el("span","cap-edit",t.text);
+      d.style.cssText="display:inline-block;font-family:"+t.font+";font-size:"+t.size+"px;font-weight:600;color:var(--c-head);white-space:pre-line;pointer-events:auto;cursor:text";
+      d.title="Klicken, um Text für "+MONTHS[m]+" zu bearbeiten";
+      d.onclick=()=>editCaption(m,box);
+      wrap.append(d);
+      caps.append(wrap);
+    });
+    page.append(caps);
+  }
+
+  setPageBg(page,state.images[m]);
+  page.classList.toggle("bgmode-page",state.layout==="bg");
+
+  if(!state.showHead){
+    const foot=el("div","mfoot",MONTHS[m]+" "+y);
+    if(state.titlePos==="bc")foot.style.textAlign="center";
+    if(state.titlePos==="br")foot.style.textAlign="right";
+    page.append(foot);
+  }
+
+  const first=new Date(y,m,1);
+  const lead=(first.getDay()-ws+7)%7, dim=new Date(y,m+1,0).getDate(), dimPrev=new Date(y,m,0).getDate();
+
+  if(state.tabMode==="strip"){
+    const strip=el("div","strip");
+    for(let d=1;d<=dim;d++){
+      const dt=new Date(y,m,d), key=dt.getFullYear()+"-"+dt.getMonth()+"-"+dt.getDate();
+      const hName=H[key], sun=dt.getDay()===0;
+      const isWe=(ws===1&&(dt.getDay()===6||sun))||(ws===0&&sun);
+      const sd=el("div","sd");
+      sd.append(el("small",null,wd[(dt.getDay()-ws+7)%7][0]));
+      sd.append(el("span","n",String(d)));
+      let dcol="#222";
+      if(hName||(state.sunday&&sun))dcol="var(--c-holiday)";
+      else if(isWe)dcol="var(--c-weekend)";
+      if(hName||isWe)sd.style.color=dcol;
+      if(state.events[key])sd.classList.add("evday");
+      if(hName)sd.title=hName;
+      if(state.today&&key===todayKey)sd.style.fontWeight="900";
+      sd.style.paddingTop=Math.max(3,Math.round(state.cellH/6))+"px";
+      sd.style.paddingBottom=sd.style.paddingTop;
+      sd.style.fontSize=Math.max(9,Math.round(state.cellH/5))+"px";
+      sd.onclick=()=>editDay(key,dt);
+      strip.append(sd);
+    }
+    page.append(strip);
+    appendMLogo(page);
+    appendMoLogos(page);
+    return page;
+  }
+
+  const tbl=el("table","cal"), trh=el("tr");
+  wd.forEach(w=>trh.append(el("th",null,w)));
+  const thead=el("thead"); thead.append(trh); tbl.append(thead);
+  const tbody=el("tbody"); tbl.append(tbody);
+
+  for(let row=0,day=1-lead; day<=dim; row++){
+    const tr=el("tr");
+    for(let c=0;c<7;c++,day++){
+      const td=el("td");
+      const dt=new Date(y,m,day), key=dt.getFullYear()+"-"+dt.getMonth()+"-"+dt.getDate();
+      if(day<1||day>dim){ td.classList.add("out"); }
+      if(day>=1&&day<=dim){
+        const hName=H[key], sun=dt.getDay()===0;
+        const isWe=(ws===1&&c>=5)||(ws===0&&c===6);
+        if(isWe)td.classList.add("we");
+        if(state.sunday&&sun)td.classList.add("sun");
+        if(hName)td.append(el("span","hname",hName));
+        td.prepend(el("span","dnum",String(day)));
+        if(state.kw&&c===0)td.append(el("span","kw","KW "+isoWeek(dt)));
+        if(state.moon&&state.cellH>=40)td.append(el("span","moon",moonIcon(dt)));
+        if(state.today&&key===todayKey)td.classList.add("today");
+        if(state.events[key])td.append(el("span","ev",state.events[key]));
+        td.title="Klicken für Notiz/Termin";
+        td.onclick=()=>editDay(key,dt);
+      }else{
+        td.append(el("span","dnum",day<1?String(dimPrev+day):String(day-dim)));
+      }
+      tr.append(td);
+    }
+    tbody.append(tr);
+  }
+  page.append(tbl);
+  appendMLogo(page);
+  appendMoLogos(page);
+  return page;
+}
+
+function render(){
+  applyTheme();
+  const main=document.getElementById("main"); main.innerHTML="";
+  const t=new Date(), todayKey=t.getFullYear()+"-"+t.getMonth()+"-"+t.getDate();
+  const H=holidays(state.year,state.region);
+  if(state.coverPage)main.append(renderCover());
+  if(state.yearPage)main.append(renderYear(H));
+  for(let m=0;m<12;m++)main.append(renderMonth(m,H,todayKey));
+}
+// ===TEIL 7 ENDE: hier folgt Teil 8 (JPEG-Export: Deckblatt, Monats-Canvas, Jahresübersicht)===
+
+/* ---------------- JPEG-Export (Canvas) ---------------- */
+function loadImg(src){return new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src=src;});}
+function drawCoverAt(g,img,x,y,w,h){
+  const ir=img.width/img.height, r=w/h;
+  let sw,sh;
+  if(ir>r){sh=img.height;sw=sh*r;}else{sw=img.width;sh=sw/r;}
+  g.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,x,y,w,h);
+}
+function truncTxt(g,t,maxW){
+  if(g.measureText(t).width<=maxW)return t;
+  while(t.length>3&&g.measureText(t+"…").width>maxW)t=t.slice(0,-1);
+  return t+"…";
+}
+function wrapLines(g,text,maxW){
+  const out=[];
+  String(text).split("\n").forEach(seg=>{
+    if(!seg.trim()){out.push("");return;}
+    let line="";
+    seg.split(/\s+/).forEach(w=>{
+      const t=line?line+" "+w:w;
+      if(g.measureText(t).width>maxW&&line){out.push(line);line=w;}else line=t;
+    });
+    if(line)out.push(line);
+  });
+  return out;
+}
+function createSRGBJPEG(canvas,dpi){
+  const dataUrl=canvas.toDataURL("image/jpeg",0.92);
+  const base64=dataUrl.split(',')[1];
+  const binary=atob(base64);
+  const len=binary.length;
+  const jpg=new Uint8Array(len);
+  for(let i=0;i<len;i++)jpg[i]=binary.charCodeAt(i);
+  return jpg;
+}
+function dl(jpgBytes,name){
+  const blob=new Blob([jpgBytes],{type:"image/jpeg"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+
+/* Grundgerüst für Papierformat (Deckblatt + Monate identisch) */
+function paperSetup(paper,bleed){
+  const DPI=300, MM_PER_INCH=25.4, PXMM=DPI/MM_PER_INCH;
+  const dd=dimsFor(paper,state.orientation);
+  const pwMm=dd[0], phMm=dd[1], bMm=bleed?3:0;
+  const W=820, Ht=W*phMm/pwMm, LPMM=W/pwMm, bL=bMm*LPMM;
+  const s=PXMM/LPMM;
+  const outW=Math.round((pwMm+2*bMm)*PXMM), outH=Math.round((phMm+2*bMm)*PXMM);
+  return {W,Ht,LPMM,bL,s,outW,outH,pwMm,phMm,bMm};
+}
+function blankCanvas(ps){
+  const cv=document.createElement("canvas"); cv.width=ps.outW; cv.height=ps.outH;
+  const g=srgbContext(cv);
+  return {cv,g};
+}
+
+/* ---- Deckblatt-Canvas (JPEG-Export) ---- */
+async function coverCanvas(opt){
+  opt=opt||{};
+  const ps=paperSetup(opt.paper||"a4", !!opt.bleed);
+  const {W,Ht}=ps;
+  const c=state.cover;
+  const {cv,g}=blankCanvas(ps);
+
+  /* Hintergrund */
+  let bg=null;
+  if(c.img)bg=await loadImg(c.img);
+  else if(state.pageBg)bg=await loadImg(state.pageBg);
+  if(bg){
+    /* Deckblatt-Bild mit individuellem Zoom, zentriert */
+    const k=(typeof c.imgScale==="number"&&c.imgScale>=0.2&&c.imgScale<=3)?c.imgScale:1;
+    const bw=ps.outW*k, bh=ps.outH*k;
+    drawCoverAt(g,bg,(ps.outW-bw)/2,(ps.outH-bh)/2,bw,bh);
+  }
+  else{ g.fillStyle=state.c_bg; g.fillRect(0,0,ps.outW,ps.outH); }
+
+  g.setTransform(ps.s,0,0,ps.s,ps.bL*ps.s,ps.bL*ps.s);
+
+  /* Jahreszahl oben (optional, eigene Schrift/Farbe/Stil) */
+  if(c.yearShow){
+    const ys=c.yearSize, ital=(c.yearStyle==="italic");
+    g.fillStyle=c.yearColor||state.c_head;
+    g.font=(ital?"italic ":"")+(ital?"600":c.yearStyle)+" "+ys+"px "+c.yearFont;
+    g.textAlign="center"; g.textBaseline="alphabetic";
+    g.fillText(String(state.year), W/2+c.yearDx, 14+ys*0.8+c.yearDy);
+    g.textAlign="left";
+  }
+
+  /* Titel unten */
+  [["t1",52],["t2",14]].forEach(pair=>{
+    const t=c[pair[0]], baseBottom=pair[1];
+    if(!(t.text&&t.text.trim()))return;
+    g.fillStyle=state.c_head;
+    g.font="600 "+t.size+"px "+t.font;
+    g.textAlign=t.align;
+    let x = (t.align==="left") ? 24 : (t.align==="center") ? W/2 : W-24;
+    const y = Ht - baseBottom - t.dy - Math.round(t.size*0.22);
+    g.fillText(t.text, x+t.dx, y);
+    g.textAlign="left";
+  });
+
+  /* Deckblatt-Logo (in %-Koordinaten, wie in der Vorschau; x/y = linke obere Ecke) */
+  {
+    const L=c.logo;
+    if(L&&L.src){
+      const im=await loadImg(L.src);
+      if(!im){
+        console.warn("Deckblatt-Logo konnte im Export nicht geladen werden.");
+      }else if(!im.width||!im.height){
+        console.warn("Deckblatt-Logo hat ungültige Dimensionen.");
+      }else{
+        const lw=(L.w/100)*W;
+        const lh=lw*(im.height/im.width);   /* Seitenverhältnis bleibt erhalten */
+        g.drawImage(im,(L.x/100)*W,(L.y/100)*Ht,lw,lh);
+      }
+    }
+  }
+  return cv;
+}
+
+/* ANKER: monat-export */
+async function monthCanvas(m,opt){
+  opt=opt||{};
+  const paper=opt.paper||"a4", bleed=!!opt.bleed;
+  const ps=paperSetup(paper,bleed);
+  const {W,Ht,bL,s,outW,outH}=ps;
+
+  const y=state.year, Hh=holidays(y,state.region), ws=+state.wstart, wd=ws===1?WD_MON:WD_SUN;
+  const first=new Date(y,m,1);
+  const lead=(first.getDay()-ws+7)%7, dim=new Date(y,m+1,0).getDate();
+  const rows=Math.ceil((lead+dim)/7);
+
+  const PAD=28, HEAD_H=state.showHead?76:0, COL_H=30;
+
+  /* FLOW = vertikale Zwischenräume exakt wie Vorschau:
+     Foto-Fläche→Textboxen (14+8) und Monatstitel (10+29), ohne Kopfzeile */
+  const FLOW=state.showHead?22:61;
+
+  let stripH=0, CELL_H=0;
+  if(state.tabMode==="strip"){
+    stripH=Math.max(24,Math.min(state.cellH,44))+14;
+  }else{
+    const autoCell=(Ht-2*PAD-HEAD_H-COL_H)/rows;
+    CELL_H=Math.min(autoCell,state.cellH);
+  }
+  const DAY_AREA=stripH?stripH:(COL_H+rows*CELL_H);
+
+  /* Fotofläche inkl. Textboxen + Monatstitel + Zwischenräume (wie Vorschau) */
+  const CAP_H=capHFor(m);
+  const AREA_H=(state.layout==="top")?Math.max(100,Ht-2*PAD-HEAD_H-DAY_AREA-FLOW-CAP_H):0;
+  const AREA_W=W+2*bL;
+
+  const {cv,g}=blankCanvas(ps);
+
+  let bg=null;
+  if(state.layout==="bg"&&state.images[m])bg=await loadImg(state.images[m]);
+  else if(state.pageBg)bg=await loadImg(state.pageBg);
+  if(bg){ drawCoverAt(g,bg,0,0,outW,outH); }
+  else{ g.fillStyle=state.c_bg; g.fillRect(0,0,outW,outH); }
+
+  g.setTransform(s,0,0,s,bL*s,bL*s);
+
+  if(state.showHead){
+    g.fillStyle=state.c_head; g.font="bold 34px "+state.font;
+    g.fillText(MONTHS[m],PAD,PAD+34);
+    g.font="13px "+state.font; g.fillStyle="#999"; g.textAlign="right";
+    g.fillText(String(y),W-PAD,PAD+34); g.textAlign="left";
+    g.strokeStyle=state.c_head; g.lineWidth=3;
+    g.beginPath(); g.moveTo(PAD,PAD+52); g.lineTo(W-PAD,PAD+52); g.stroke();
+  }
+
+  if(state.layout==="top"&&state.images[m]){
+    const img=await loadImg(state.images[m]);
+    if(img){
+      const fpw=AREA_W*photoScaleFor(m);
+      const fph=AREA_H*photoScaleFor(m);
+      const fpx=-bL+(AREA_W-fpw)/2+state.photoDx;
+      const fpy=PAD+HEAD_H+(AREA_H-fph)/2+state.photoDy;
+      if(state.softEdge){
+        const fx=Math.max(4,Math.min(state.frameW,fpw/2));
+        /* Weichzeichnung in Ausgabeauflösung rechnen (s = Layout→300-dpi-Faktor) */
+        const fcv=featherImg(img,fpw*s,fph*s,fx*s,state.cornerR*s);
+        g.drawImage(fcv,fpx,fpy,fpw,fph);
+      }else{
+        const f=Math.min(state.frameW,Math.min(fpw,fph)/2);
+        g.fillStyle=hexRGBA(state.frameC,state.frameA);
+        g.save();
+        g.beginPath(); roundRectPath(g,state.cornerR,fpx,fpy,fpw,fph); g.fill(); g.clip();
+        drawCoverAt(g,img,fpx+f,fpy+f,fpw-2*f,fph-2*f);
+        g.restore();
+      }
+    }
+  }
+
+  /* Textboxen unter dem Foto – gemeinsamer Ursprung für beide Boxen */
+  {
+    const cap=state.captions[m];
+    const capTop=PAD+HEAD_H+AREA_H+14;   /* 14 px Abstand wie margin-bottom der Foto-Fläche in der Vorschau */
+    [[cap.txt1,"center"],[cap.txt2,"right"]].forEach(pair=>{
+      const t=pair[0], align=pair[1];
+      if(!(t.text&&t.text.trim()))return;
+      g.fillStyle=state.c_head;
+      g.font="600 "+t.size+"px "+t.font;
+      const bly=capTop+t.size+t.dy;
+      if(align==="center"){ g.textAlign="center"; g.fillText(t.text,W/2+t.dx,bly); }
+      else{ g.textAlign="right"; g.fillText(t.text,W-PAD+t.dx,bly); }
+      g.textAlign="left";
+    });
+  }
+
+  /* Monatstitel – wie .mfoot in der Vorschau (fett, 24 px, zwischen Textboxen und Kalender) */
+  if(!state.showHead){
+    const ty=PAD+HEAD_H+AREA_H+CAP_H+51;
+    g.fillStyle=state.c_head; g.font="bold 24px "+state.font;
+    if(state.titlePos==="bc"){ g.textAlign="center"; g.fillText(MONTHS[m]+" "+y,W/2,ty); }
+    else if(state.titlePos==="br"){ g.textAlign="right"; g.fillText(MONTHS[m]+" "+y,W-PAD,ty); }
+    else{ g.fillText(MONTHS[m]+" "+y,PAD,ty); }
+    g.textAlign="left";
+  }
+
+  if(state.tabMode==="strip"){
+    const sy=PAD+HEAD_H+AREA_H+CAP_H+FLOW;
+    const bw=(W-2*PAD)/dim;
+    const fs=Math.max(9,Math.round(state.cellH/5));
+    for(let d=1;d<=dim;d++){
+      const dt=new Date(y,m,d), key=dt.getFullYear()+"-"+dt.getMonth()+"-"+dt.getDate();
+      const hName=Hh[key], sun=dt.getDay()===0;
+      const x=PAD+(d-1)*bw;
+      if(state.grid){ g.strokeStyle=state.c_grid; g.lineWidth=1; g.strokeRect(x+.5,sy+.5,bw,stripH); }
+      let dcol="#222";
+      if(hName||(state.sunday&&sun))dcol=state.c_holiday;
+      else if(sun||dt.getDay()===6)dcol=state.c_weekend;
+      g.fillStyle=dcol; g.font="bold "+fs+"px "+state.font; g.textAlign="center";
+      g.fillText(String(d),x+bw/2,sy+fs+4);
+      g.fillStyle="#999"; g.font="9px "+state.font;
+      g.fillText(wd[(dt.getDay()-ws+7)%7][0],x+bw/2,sy+stripH-4);
+      g.textAlign="left";
+      if(state.events[key]){ g.fillStyle="#0369a1"; g.fillRect(x+bw*.25,sy-2,bw*.5,2); }
+    }
+  }else{
+    const GRID_Y=PAD+HEAD_H+AREA_H+CAP_H+FLOW, cw=(W-2*PAD)/7;
+    wd.forEach((w,i)=>{
+      const isWe=(ws===1&&i>=5)||(ws===0&&i===6);
+      g.fillStyle=isWe?state.c_weekend:state.c_head;
+      g.font="bold 13px "+state.font;
+      g.fillText(w,PAD+i*cw+8,GRID_Y+24);
+    });
+    g.strokeStyle=state.c_head; g.lineWidth=2;
+    g.beginPath(); g.moveTo(PAD,GRID_Y+34); g.lineTo(W-PAD,GRID_Y+34); g.stroke();
+
+    for(let r=0;r<rows;r++){
+      for(let c2=0;c2<7;c2++){
+        const day=1-lead+r*7+c2;
+        const x=PAD+c2*cw, yy=GRID_Y+COL_H+r*CELL_H;
+        if(state.layout==="bg"){ g.fillStyle="rgba(255,255,255,.85)"; g.fillRect(x,yy,cw,CELL_H); }
+        if(state.grid){ g.strokeStyle=state.c_grid; g.lineWidth=1; g.strokeRect(x+.5,yy+.5,cw,CELL_H); }
+        if(day<1||day>dim)continue;
+        const dt=new Date(y,m,day), key=dt.getFullYear()+"-"+dt.getMonth()+"-"+dt.getDate();
+        const hName=Hh[key], sun=dt.getDay()===0;
+        const isWe=(ws===1&&(c2===5||c2===6))||(ws===0&&(c2===0||c2===6));
+        let dcol="#222";
+        if(hName||(state.sunday&&sun))dcol=state.c_holiday;
+        else if(isWe)dcol=state.c_weekend;
+        g.fillStyle=dcol; g.font="bold "+state.fsize+"px "+state.font;
+        g.fillText(String(day),x+8,yy+24);
+        if(state.kw&&c2===0){
+          g.fillStyle="#999"; g.font="10px "+state.font; g.textAlign="right";
+          g.fillText("KW "+isoWeek(dt),x+cw-6,yy+24); g.textAlign="left";
+        }
+        if(hName){
+          g.fillStyle=state.c_holiday; g.font="600 11px "+state.font;
+          g.fillText(truncTxt(g,hName,cw-14),x+8,yy+40);
+        }
+        if(state.events[key]&&CELL_H>=44){
+          g.fillStyle="#0369a1"; g.font="11px "+state.font;
+          let ly=yy+(hName?56:40);
+          wrapLines(g,state.events[key],cw-16).slice(0,3).forEach(line=>{g.fillText(line,x+8,ly);ly+=13;});
+        }
+        if(state.moon&&CELL_H>=40){
+          g.font="13px serif"; g.fillStyle="#555";
+          g.fillText(moonIcon(dt),x+8,yy+CELL_H-8);
+        }
+      }
+    }
+  }
+
+  /* Monats-Logo unter dem Kalender */
+  if(state.monthLogo&&state.monthLogo.src){
+    const im=await loadImg(state.monthLogo.src);
+    if(im){
+      const L=state.monthLogo;
+      const lw=(L.w/100)*W, lh=lw*(im.height/im.width);
+      g.drawImage(im,(W-lw)/2+L.dx,Ht-PAD-lh+L.dy,lw,lh);
+    }
+  }
+
+  /* Logos 1–4 (in %-Koordinaten, wie in der Vorschau; x/y = linke obere Ecke) */
+  for(const k of ["a","b","c","d"]){
+    const L=state.logos[k];
+    if(!L||!L.src)continue;
+    const im=await loadImg(L.src);
+    if(!im||!im.width||!im.height){
+      console.warn("Logo "+k.toUpperCase()+" konnte im Export nicht geladen werden.");
+      continue;
+    }
+    const lw=(L.w/100)*W;
+    const lh=lw*(im.height/im.width);
+    g.drawImage(im,(L.x/100)*W,(L.y/100)*Ht,lw,lh);
+  }
+  return cv;
+}
+
+async function yearCanvas(){
+  const scale=2;
+  const y=state.year, Hh=holidays(y,state.region), ws=+state.wstart, wd=ws===1?WD_MON:WD_SUN;
+  const W=820, PAD=28, GAP=14, TITLE=70, cols=3, mrows=4;
+  const mw=(W-2*PAD-(cols-1)*GAP)/cols, mh=168;
+  const Hpx=PAD*2+TITLE+mrows*mh+(mrows-1)*GAP;
+  const cv=document.createElement("canvas"); cv.width=W*scale; cv.height=Hpx*scale;
+  const g=cv.getContext("2d"); g.scale(scale,scale);
+  g.fillStyle=state.c_bg; g.fillRect(0,0,W,Hpx);
+
+  g.fillStyle=state.c_head; g.font="bold 28px "+state.font; g.textAlign="center";
+  g.fillText("Jahresübersicht "+y,W/2,PAD+30); g.textAlign="left";
+  g.strokeStyle=state.c_head; g.lineWidth=3;
+  g.beginPath(); g.moveTo(PAD,PAD+46); g.lineTo(W-PAD,PAD+46); g.stroke();
+
+  const TOP=PAD+TITLE;
+  for(let m=0;m<12;m++){
+    const cx=PAD+(m%cols)*(mw+GAP), cy=TOP+Math.floor(m/cols)*(mh+GAP);
+    g.strokeStyle=state.c_grid; g.lineWidth=1; g.strokeRect(cx+.5,cy+.5,mw,mh);
+    g.fillStyle=state.c_head; g.font="bold 14px "+state.font;
+    g.fillText(MONTHS[m],cx+10,cy+20);
+    g.strokeStyle=state.c_head; g.lineWidth=2;
+    g.beginPath(); g.moveTo(cx+10,cy+26); g.lineTo(cx+mw-10,cy+26); g.stroke();
+
+    g.font="600 10px "+state.font;
+    wd.forEach((w,i)=>{
+      const isWe=(ws===1&&i>=5)||(ws===0&&i===6);
+      g.fillStyle=isWe?state.c_weekend:"#666";
+      g.fillText(w[0],cx+10+i*((mw-20)/7)+2,cy+40);
+    });
+
+    const first=new Date(y,m,1);
+    const lead=(first.getDay()-ws+7)%7, dim=new Date(y,m+1,0).getDate();
+    const colW=(mw-20)/7, rowH=17;
+    for(let d=1;d<=dim;d++){
+      const dt=new Date(y,m,d), key=dt.getFullYear()+"-"+dt.getMonth()+"-"+dt.getDate();
+      const hName=Hh[key], sun=dt.getDay()===0;
+      const col=(lead+d-1)%7, row=Math.floor((lead+d-1)/7);
+      let dcol="#333";
+      if(hName||(state.sunday&&sun))dcol=state.c_holiday;
+      else if((ws===1&&(dt.getDay()===6||sun))||(ws===0&&sun))dcol=state.c_weekend;
+      g.fillStyle=dcol; g.font=(state.events[key]?"bold ":"")+"11px "+state.font;
+      g.fillText(String(d),cx+10+col*colW+2,cy+56+row*rowH);
+    }
+  }
+  return cv;
+}
+// ===TEIL 8 ENDE: hier folgt Teil 9 (Steuerung: Selects, Regler, Textbox-Panel, Deckblatt, Logos)===
+
+/* ---------------- Steuerung ---------------- */
+function initSelect(id,val,fn){ const e=document.getElementById(id); e.value=val; e.onchange=()=>{fn(e.value); persist(); render(); updatePrintStyle();}; }
+initSelect("orient",state.orientation,v=>{state.orientation=v;});
+initSelect("tabMode",state.tabMode,v=>{state.tabMode=v;});
+initSelect("wstart",state.wstart,v=>{state.wstart=+v;});
+initSelect("region",state.region,v=>{state.region=v;});
+initSelect("font",state.font,v=>{state.font=v;});
+initSelect("layout",state.layout,v=>{state.layout=v;});
+initSelect("titlePos",state.titlePos,v=>{state.titlePos=v;});
+
+document.getElementById("jahr").value=state.year;
+document.getElementById("jahr").oninput=e=>{state.year=+e.target.value||2026;persist();render();};
+
+["c_head","c_weekend","c_holiday","c_grid","c_bg","frameC"].forEach(id=>{
+  const e=document.getElementById(id); e.value=state[id];
+  e.oninput=()=>{state[id]=e.value;persist();render();};
+});
+
+function initRange(id,valId,key,fmt){
+  const e=document.getElementById(id); e.value=state[key];
+  document.getElementById(valId).textContent=fmt(state[key]);
+  e.oninput=()=>{state[key]=+e.value;document.getElementById(valId).textContent=fmt(state[key]);persist();render();};
+}
+initRange("fsize","fsv","fsize",v=>v+" px");
+initRange("cellH","chv","cellH",v=>v+" px");
+initRange("frameW","fwv","frameW",v=>v+" px");
+initRange("cornerR","crv","cornerR",v=>v+" px");
+
+/* Foto-Größe (Standard) */
+(function(){
+  const e=document.getElementById("photoScale");
+  e.value=Math.round(state.photoScale*100);
+  document.getElementById("psv").textContent=Math.round(state.photoScale*100)+" %";
+  e.oninput=()=>{
+    state.photoScale=Math.min(1,Math.max(0.3,+e.value/100));
+    document.getElementById("psv").textContent=Math.round(state.photoScale*100)+" %";
+    persist(); render();
+  };
+})();
+
+/* Foto-Position: X/Y-Versatz global */
+(function(){
+  const dx=document.getElementById("photoDx"), dy=document.getElementById("photoDy");
+  dx.value=state.photoDx; document.getElementById("photoDxv").textContent=state.photoDx+" px";
+  dy.value=state.photoDy; document.getElementById("photoDyv").textContent=state.photoDy+" px";
+  dx.oninput=()=>{ state.photoDx=+dx.value; document.getElementById("photoDxv").textContent=dx.value+" px"; persist(); render(); };
+  dy.oninput=()=>{ state.photoDy=+dy.value; document.getElementById("photoDyv").textContent=dy.value+" px"; persist(); render(); };
+  document.getElementById("photoDx_reset").onclick=()=>{ state.photoDx=0; dx.value=0; document.getElementById("photoDxv").textContent="0 px"; persist(); render(); };
+  document.getElementById("photoDy_reset").onclick=()=>{ state.photoDy=0; dy.value=0; document.getElementById("photoDyv").textContent="0 px"; persist(); render(); };
+})();
+
+document.getElementById("btnScaleReset").onclick=()=>{
+  if(Object.keys(state.photoScales).length===0)return;
+  if(confirm("Alle individuellen Foto-Größen auf den Standard-Regler zurücksetzen?")){
+    state.photoScales={}; persist(); render();
+  }
+};
+
+(function(){
+  const e=document.getElementById("frameA"); e.value=Math.round(state.frameA*100);
+  document.getElementById("fav").textContent=Math.round(state.frameA*100)+" %";
+  e.oninput=()=>{state.frameA=+e.value/100;document.getElementById("fav").textContent=e.value+" %";persist();render();};
+})();
+
+/* ---------------- Bild-Qualität & JPEG-Kompression ---------------- */
+(function(){
+  const sel=document.getElementById("imgQuality"); sel.value=String(state.imgQuality);
+  sel.onchange=()=>{ state.imgQuality=+sel.value; persist(); };
+  const q=document.getElementById("jpgQ"); q.value=state.jpgQ;
+  document.getElementById("jqv").textContent=state.jpgQ+" %";
+  q.oninput=()=>{ state.jpgQ=+q.value; document.getElementById("jqv").textContent=q.value+" %"; persist(); };
+})();
+
+/* ---------------- Eigene Schriftarten (Import via IndexedDB) ---------------- */
+const CUST_KEY="customFonts";
+let CUST_FONTS=[];
+let CUST_LOADED={};
+const CUST_SELECTS=["font","t1_font","t2_font","cvT1_font","cvT2_font","cvYearFont"];
+
+/* Eigenständige IDB-Datenbank nur für Schriftarten – unabhängig vom Foto-Schema */
+let CUST_DB=null;
+function custDbOpen(){
+  return new Promise((res,rej)=>{
+    if(CUST_DB)return res(CUST_DB);
+    const rq=indexedDB.open("kd_custFonts",1);
+    rq.onupgradeneeded=()=>{ if(!rq.result.objectStoreNames.contains("fonts")) rq.result.createObjectStore("fonts"); };
+    rq.onsuccess=()=>{ CUST_DB=rq.result; res(CUST_DB); };
+    rq.onerror=()=>rej(rq.error);
+  });
+}
+async function idbCustFontsRead(){
+  try{
+    const db=await custDbOpen();
+    return await new Promise((res,rej)=>{
+      const tx=db.transaction("fonts","readonly");
+      const rq=tx.objectStore("fonts").get(CUST_KEY);
+      rq.onsuccess=()=>res(Array.isArray(rq.result)?rq.result:[]);
+      rq.onerror=()=>rej(rq.error);
+    });
+  }catch(e){ console.warn("IDB customFonts lesen fehlgeschlagen:",e); return []; }
+}
+async function idbCustFontsSave(arr){
+  try{
+    const db=await custDbOpen();
+    await new Promise((res,rej)=>{
+      const tx=db.transaction("fonts","readwrite");
+      tx.objectStore("fonts").put(arr,CUST_KEY);
+      tx.oncomplete=res; tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error);
+    });
+  }catch(e){
+    console.error("IDB customFonts speichern fehlgeschlagen:",e);
+    alert("Schriftart konnte nicht gespeichert werden (IndexedDB-Fehler: "+(e&&e.name?e.name:"unbekannt")+"). Details siehe Konsole (F12).");
+  }
+}
+function custVal(f){ return "'"+f.name+"'"; }
+function custSyncSelects(){
+  CUST_SELECTS.forEach(id=>{
+    const sel=document.getElementById(id);
+    if(!sel)return;
+    /* Remove existing ★-Options */
+    [...sel.options].forEach(opt=>{ if(opt.textContent.startsWith("★ ")) opt.remove(); });
+    CUST_FONTS.forEach(f=>{
+      const v=custVal(f);
+      const o=document.createElement("option");
+      o.value=v; o.textContent="★ "+f.name;
+      sel.append(o);
+    });
+  });
+  /* Wähle aktuelle Werte nach Sync */
+  const gf=document.getElementById("font"); if(gf&&state.font)gf.value=state.font;
+  const yf=document.getElementById("cvYearFont"); if(yf&&state.cover.yearFont)yf.value=state.cover.yearFont;
+  const c1=document.getElementById("cvT1_font"); if(c1&&state.cover.t1.font)c1.value=state.cover.t1.font;
+  const c2=document.getElementById("cvT2_font"); if(c2&&state.cover.t2.font)c2.value=state.cover.t2.font;
+  if(typeof updateCapPanel==="function")updateCapPanel(capSel);
+}
+async function custRegister(f){
+  return new Promise(res=>{
+    let ff;
+    try{ ff=new FontFace(f.name,"url("+f.data+")"); }
+    catch(e){ console.warn("Schriftart ungültig:",f.name); return res(); }
+    ff.load().then(()=>{ document.fonts.add(ff); CUST_LOADED[f.name]=ff; })
+            .catch(()=>console.warn("Schriftart konnte nicht geladen werden:",f.name))
+            .then(res);
+  });
+}
+async function custRegisterAll(){
+  CUST_FONTS=await idbCustFontsRead();
+  if(!Array.isArray(CUST_FONTS))CUST_FONTS=[];
+  /* Migration: localStorage → IDB (einmalig) */
+  const ls=localStorage.getItem("kd_customFonts");
+  if(ls){
+    try{
+      const arr=JSON.parse(ls);
+      if(Array.isArray(arr)&&arr.length&&!CUST_FONTS.length){
+        CUST_FONTS=arr;
+        await idbCustFontsSave(CUST_FONTS);
+        console.log("Migration: "+arr.length+" Schriftarten von localStorage→IDB");
+      }
+      localStorage.removeItem("kd_customFonts");
+    }catch(e){}
+  }
+  await Promise.all(CUST_FONTS.map(custRegister));
+  custSyncSelects();
+}
+function custUI(){
+  let ov=document.getElementById("custFontOv");
+  if(ov){ ov.remove(); return; }
+  ov=document.createElement("div");
+  ov.id="custFontOv";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;display:flex;align-items:center;justify-content:center";
+  const box=document.createElement("div");
+  box.style.cssText="background:#fff;border-radius:10px;padding:18px;max-width:520px;width:92%;max-height:80vh;overflow:auto;font-family:'Segoe UI',Arial,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.35)";
+  const h=document.createElement("h3");
+  h.textContent="Eigene Schriftarten";
+  h.style.cssText="margin:0 0 6px;font-size:17px;color:#444";
+  const p=document.createElement("p");
+  p.style.cssText="font-size:12px;color:#888;margin:0 0 10px";
+  p.textContent="Importierte Schriftarten erscheinen in allen Schrift-Auswahllisten (mit ★ gekennzeichnet) und werden auch beim JPEG-Export verwendet. Sie bleiben im Browser gespeichert.";
+  box.append(h,p);
+  const list=document.createElement("div");
+  function renderList(){
+    list.innerHTML="";
+    if(!CUST_FONTS.length){
+      list.style.cssText="font-size:13px;color:#aaa;padding:8px 0";
+      list.textContent="Noch keine eigenen Schriftarten importiert.";
+      return;
+    }
+    CUST_FONTS.forEach((f,i)=>{
+      const row=document.createElement("div");
+      row.style.cssText="display:flex;align-items:center;gap:8px;border-top:1px solid #eee;padding:7px 0";
+      const nm=document.createElement("span");
+      nm.style.cssText="flex:1;font-size:16px";
+      nm.style.fontFamily=custVal(f);
+      nm.textContent=f.name+" – Aa Bb Cc 1955";
+      const del=document.createElement("button");
+      del.textContent="✖ Entfernen";
+      del.style.cssText="border:none;background:#eee;border-radius:6px;cursor:pointer;padding:4px 8px;font-size:11px";
+      del.onclick=()=>{
+        if(!confirm('Schriftart "'+f.name+'" entfernen? Texte damit fallen auf die Standardschrift zurück.'))return;
+        if(CUST_LOADED[f.name]){ try{ document.fonts.delete(CUST_LOADED[f.name]); }catch(e){} delete CUST_LOADED[f.name]; }
+        CUST_FONTS.splice(i,1);
+        idbCustFontsSave(CUST_FONTS).then(()=>{ custSyncSelects(); renderList(); render(); });
+      };
+      row.append(nm,del);
+      list.append(row);
+    });
+  }
+  renderList();
+  const imp=document.createElement("button");
+  imp.textContent="＋ Schriftart importieren (.ttf/.otf/.woff/.woff2)";
+  imp.style.cssText="background:#6d4aff;color:#fff;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;font-size:13px;margin-top:12px";
+  const close=document.createElement("button");
+  close.textContent="Schließen";
+  close.style.cssText="background:#78909c;color:#fff;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;font-size:13px;margin:12px 0 0 6px";
+  const fi=document.createElement("input");
+  fi.type="file"; fi.id="custFontFile";
+  fi.accept=".ttf,.otf,.woff,.woff2";
+  fi.style.display="none";
+  imp.onclick=()=>fi.click();
+  close.onclick=()=>ov.remove();
+  ov.onclick=e=>{ if(e.target===ov)ov.remove(); };
+  fi.onchange=()=>{
+    const f=fi.files[0]; if(!f)return;
+    const rd=new FileReader();
+    rd.onload=async()=>{
+      const def=f.name.replace(/\.[^.]+$/,"");
+      const nm=(prompt("Name der Schriftart (so erscheint sie in den Auswahllisten):",def)||"").trim();
+      if(!nm){ fi.value=""; return; }
+      const exists=CUST_FONTS.findIndex(x=>x.name===nm);
+      if(exists>=0&&!confirm('Eine Schriftart namens "'+nm+'" existiert bereits. Ersetzen?')){ fi.value=""; return; }
+      const entry={name:nm,data:rd.result};
+      if(exists>=0)CUST_FONTS[exists]=entry; else CUST_FONTS.push(entry);
+      await custRegister(entry);
+      await idbCustFontsSave(CUST_FONTS);
+      custSyncSelects(); renderList(); render();
+      fi.value="";
+    };
+    rd.readAsDataURL(f);
+  };
+  box.append(list,imp,close,fi);
+  ov.append(box);
+  document.body.append(ov);
+}
+(function(){
+  const btn=document.createElement("button");
+  btn.className="btn gray";
+  btn.textContent="🔤 Eigene Schriftarten";
+  btn.style.marginLeft="6px";
+  btn.onclick=custUI;
+  const anchor=document.getElementById("btnResCheck");
+  if(anchor&&anchor.parentNode)anchor.parentNode.append(btn);
+})();
+/* ---------------- Textboxen PRO MONAT ---------------- */
+let capSel=0;
+(function(){
+  const sel=document.getElementById("capMonth");
+  MONTHS.forEach((mn,i)=>{const o=document.createElement("option");o.value=i;o.textContent=mn;sel.append(o);});
+  sel.value="0";
+  sel.onchange=()=>{ capSel=+sel.value; updateCapPanel(capSel); };
+})();
+/* ANKER: textboxen-panel */
+function updateCapPanel(m){
+  const cap=state.captions[m];
+  ["t1","t2"].forEach(prefix=>{
+    const box=(prefix==="t1")?"txt1":"txt2";
+    const t=cap[box];
+    document.getElementById(prefix+"_text").value=t.text||"";
+    document.getElementById(prefix+"_size").value=t.size;
+    document.getElementById(prefix+"_sv").textContent=t.size+" px";
+    document.getElementById(prefix+"_font").value=t.font;
+    document.getElementById(prefix+"_dx").value=t.dx;
+    document.getElementById(prefix+"_dxv").textContent=t.dx+" px";
+    document.getElementById(prefix+"_dy").value=t.dy;
+    document.getElementById(prefix+"_dyv").textContent=t.dy+" px";
+  });
+}
+(function(){
+  ["t1","t2"].forEach(prefix=>{
+    const box=(prefix==="t1")?"txt1":"txt2";
+    const getT=()=>state.captions[capSel][box];
+    document.getElementById(prefix+"_text").oninput=e=>{getT().text=e.target.value;persist();render();};
+    document.getElementById(prefix+"_size").oninput=e=>{getT().size=+e.target.value;document.getElementById(prefix+"_sv").textContent=e.target.value+" px";persist();render();};
+    document.getElementById(prefix+"_font").onchange=e=>{getT().font=e.target.value;persist();render();};
+    [["dx","X"],["dy","Y"]].forEach(pair=>{
+      const rk=pair[0];
+      const rg=document.getElementById(prefix+"_"+rk);
+      rg.oninput=()=>{getT()[rk]=+rg.value;document.getElementById(prefix+"_"+rk+"v").textContent=rg.value+" px";persist();render();};
+      const rb=document.getElementById(prefix+"_"+rk+"_reset");
+      if(rb)rb.onclick=()=>{
+        getT()[rk]=0;
+        rg.value=0;
+        document.getElementById(prefix+"_"+rk+"v").textContent="0 px";
+        persist();render();
+      };
+    });
+  });
+  updateCapPanel(0);
+})();
+
+/* ---------------- Deckblatt-Steuerung ---------------- */
+const CHECKS={optGrid:"grid",optKw:"kw",optMoon:"moon",optSunday:"sunday",optToday:"today",optYearPage:"yearPage",optSoftEdge:"softEdge",optShowHead:"showHead",optCover:"coverPage"};
+Object.keys(CHECKS).forEach(id=>{
+  const e=document.getElementById(id); e.checked=!!state[CHECKS[id]];
+  e.onchange=()=>{state[CHECKS[id]]=e.checked;persist();render();};
+});
+
+/* Deckblatt-Hauptbild */
+document.getElementById("btnCoverImg").onclick=()=>document.getElementById("coverImgFile").click();
+document.getElementById("coverImgFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  readImageScaled(f,state.imgQuality,(data)=>{ state.cover.img=data; persist(); render(); });
+  e.target.value="";
+};
+document.getElementById("btnCoverImgDel").onclick=()=>{ state.cover.img=null; persist(); render(); };
+
+/* Deckblatt-Bild: Zoom-Regler + Standardgröße */
+(function(){
+  const c=state.cover;
+  const rg=document.getElementById("cvImgScale");
+  function sync(){
+    rg.value=Math.round(c.imgScale*100);
+    document.getElementById("cvImgs").textContent=Math.round(c.imgScale*100)+" %";
+  }
+  sync();
+  rg.oninput=()=>{
+    c.imgScale=Math.min(3,Math.max(0.2,+rg.value/100));
+    document.getElementById("cvImgs").textContent=rg.value+" %";
+    persist(); render();
+  };
+  document.getElementById("btnCvImgStd").onclick=()=>{ c.imgScale=1; sync(); persist(); render(); };
+})();
+
+/* Deckblatt: Jahreszahl */
+(function(){
+  const c=state.cover;
+  function rng(id,spanId,get,set,fmt){
+    const e=document.getElementById(id); e.value=get();
+    document.getElementById(spanId).textContent=fmt(get());
+    e.oninput=()=>{ set(+e.value); document.getElementById(spanId).textContent=fmt(+e.value); persist(); render(); };
+  }
+  rng("cvYearSize","cvYSv",()=>c.yearSize,v=>c.yearSize=v,v=>v+" px");
+
+  /* Jahreszahl: Anzeige, Schrift, Stil, Farbe */
+  const yOn=document.getElementById("cvYearOn"); yOn.checked=c.yearShow!==false;
+  yOn.onchange=()=>{c.yearShow=yOn.checked;persist();render();};
+  const yFn=document.getElementById("cvYearFont"); yFn.value=c.yearFont||"'Segoe UI',Arial,sans-serif";
+  yFn.onchange=()=>{c.yearFont=yFn.value;persist();render();};
+  const ySt=document.getElementById("cvYearStyle"); ySt.value=c.yearStyle||"800";
+  ySt.onchange=()=>{c.yearStyle=ySt.value;persist();render();};
+  const yCl=document.getElementById("cvYearColor"); yCl.value=c.yearColor||state.c_head;
+  yCl.oninput=()=>{c.yearColor=yCl.value;persist();render();};
+  document.getElementById("cvYearColorReset").onclick=()=>{c.yearColor="";yCl.value=state.c_head;persist();render();};
+  rng("cvYearDx","cvYDxv",()=>c.yearDx,v=>c.yearDx=v,v=>v+" px");
+  rng("cvYearDy","cvYDyv",()=>c.yearDy,v=>c.yearDy=v,v=>v+" px");
+
+  /* Deckblatt-Titel 1 & 2 */
+  ["T1","T2"].forEach(pfx=>{
+    const key=(pfx==="T1")?"t1":"t2";
+    const t=c[key];
+    document.getElementById("cv"+pfx+"_text").value=t.text||"";
+    document.getElementById("cv"+pfx+"_text").oninput=e=>{t.text=e.target.value;persist();render();};
+    const sz=document.getElementById("cv"+pfx+"_size"); sz.value=t.size;
+    document.getElementById("cv"+pfx+"_sv").textContent=t.size+" px";
+    sz.oninput=()=>{t.size=+sz.value;document.getElementById("cv"+pfx+"_sv").textContent=sz.value+" px";persist();render();};
+    const fn=document.getElementById("cv"+pfx+"_font"); fn.value=t.font;
+    fn.onchange=()=>{t.font=fn.value;persist();render();};
+    const al=document.getElementById("cv"+pfx+"_align"); al.value=t.align;
+    al.onchange=()=>{t.align=al.value;persist();render();};
+    [["dx","dxv"],["dy","dyv"]].forEach(pair=>{
+      const rk=pair[0], sp=pair[1];
+      const rg=document.getElementById("cv"+pfx+"_"+rk); rg.value=t[rk];
+      document.getElementById("cv"+pfx+"_"+sp).textContent=t[rk]+" px";
+      rg.oninput=()=>{t[rk]=+rg.value;document.getElementById("cv"+pfx+"_"+sp).textContent=rg.value+" px";persist();render();};
+    });
+  });
+
+  /* Logos: gemeinsame Steuerung für Deckblatt-Logo und Monats-Logos 1–4 */
+  function setupLogoPanel(cfg){
+    const $=id=>document.getElementById(id);
+    function update(){
+      const L=cfg.get();
+      ["w","x","y"].forEach(p=>{
+        $(cfg.ids[p]).textContent=L[p];
+        $(cfg.ids[p]+"_in").value=L[p];
+      });
+    }
+    if(cfg.sel)$(cfg.sel).onchange=update;
+    $(cfg.btnImg).onclick=()=>$(cfg.file).click();
+    $(cfg.file).onchange=e=>{
+      const f=e.target.files[0]; if(!f)return;
+      const supportedTypes=["image/png","image/jpeg","image/gif","image/webp"];
+      if(!supportedTypes.includes(f.type)){
+        alert("Dieses Bildformat wird nicht unterstützt. Bitte verwende PNG, JPG, GIF oder WebP.");
+        e.target.value="";
+        return;
+      }
+      readImageScaled(f,Math.min(state.imgQuality||1600,1600),(data)=>{
+        if(!data||typeof data!=="string"||!data.startsWith("data:image/")){
+          alert("Konvertierung des Bildes fehlgeschlagen (evtl. defekte GIF-Datei). Bitte versuche es mit einem anderen Bild oder speichere die GIF als PNG.");
+          e.target.value="";
+          return;
+        }
+        cfg.get().src=data;
+        persist();
+        render();
+      },true);
+      e.target.value="";
+    };
+    $(cfg.btnDel).onclick=()=>{ cfg.get().src=null; persist(); render(); };
+    [["w"],["x"],["y"]].forEach(pair=>{
+      const prop=pair[0], id=cfg.ids[prop];
+      const rg=$(id+"_in");
+      rg.oninput=()=>{
+        cfg.get()[prop]=+rg.value;
+        $(id).textContent=rg.value;
+        persist(); render();
+      };
+    });
+    update();
+    return update;
+  }
+  /* Deckblatt-Logo (ein eigenes Logo) */
+  window.updateCvLogoPanel=setupLogoPanel({
+    get:()=>state.cover.logo,
+    btnImg:"btnCvLogoImg", btnDel:"btnCvLogoDel", file:"cvLogoImgFile",
+    ids:{w:"cvCLw",x:"cvCLx",y:"cvCLy"}
+  });
+  /* Logos 1–4 (Monatsseiten) */
+  window.updateMoLogoPanel=setupLogoPanel({
+    sel:"moLogoSel",
+    get:()=>state.logos[document.getElementById("moLogoSel").value||"a"],
+    btnImg:"btnMoLogoImg", btnDel:"btnMoLogoDel", file:"moLogoImgFile",
+    ids:{w:"moLw",x:"moLx",y:"moLy"}
+  });
+})();
+
+/* Hintergrundbild (Monate) */
+document.getElementById("btnPageBg").onclick=()=>document.getElementById("pageBgFile").click();
+document.getElementById("pageBgFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  readImageScaled(f,state.imgQuality,(data)=>{ state.pageBg=data; persist(); render(); });
+};
+document.getElementById("btnPageBgDel").onclick=()=>{ state.pageBg=null; persist(); render(); };
+/* Monats-Logo (unter dem Kalender) */
+(function(){
+  const L=state.monthLogo;
+  function sync(){
+    document.getElementById("mLw_in").value=L.w;
+    document.getElementById("mLw").textContent=L.w;
+    document.getElementById("mLdx").value=L.dx;
+    document.getElementById("mLdxv").textContent=L.dx+" px";
+    document.getElementById("mLdy").value=L.dy;
+    document.getElementById("mLdyv").textContent=L.dy+" px";
+  }
+  sync();
+  document.getElementById("btnMLogo").onclick=()=>document.getElementById("mLogoFile").click();
+  document.getElementById("mLogoFile").onchange=e=>{
+    const f=e.target.files[0]; if(!f)return;
+    readImageScaled(f,Math.min(state.imgQuality||1600,1600),(data)=>{ if(!data)return; L.src=data; persist(); render(); },true);
+    e.target.value="";
+  };
+  document.getElementById("btnMLogoDel").onclick=()=>{ L.src=null; persist(); render(); };
+  document.getElementById("mLw_in").oninput=()=>{ L.w=+document.getElementById("mLw_in").value; document.getElementById("mLw").textContent=L.w; persist(); render(); };
+  document.getElementById("mLdx").oninput=()=>{ L.dx=+document.getElementById("mLdx").value; document.getElementById("mLdxv").textContent=L.dx+" px"; persist(); render(); };
+  document.getElementById("mLdy").oninput=()=>{ L.dy=+document.getElementById("mLdy").value; document.getElementById("mLdyv").textContent=L.dy+" px"; persist(); render(); };
+  document.getElementById("mLdx_reset").onclick=()=>{ L.dx=0; document.getElementById("mLdx").value=0; document.getElementById("mLdxv").textContent="0 px"; persist(); render(); };
+  document.getElementById("mLdy_reset").onclick=()=>{ L.dy=0; document.getElementById("mLdy").value=0; document.getElementById("mLdyv").textContent="0 px"; persist(); render(); };
+  document.getElementById("btnMLogoStd").onclick=()=>{ L.w=12; L.dx=0; L.dy=0; sync(); persist(); render(); };
+})();
+// ===TEIL 9 ENDE: hier folgt Teil 10 (Export, Resolution-Check, Startsequenz)===
+
+/* ---------------- Auflösungs-Prüfung ---------------- */
+function imgAspectParams(img, aspect){       /* deckt Ziel-Fläche ab ("cover") */
+  const ir=img.width/img.height;
+  let sw,sh;
+  if(ir>aspect){ sh=img.height; sw=sh*aspect; } else { sw=img.width; sh=sw/aspect; }
+  return {sw,sh};
+}
+function slotDpi(img, regUnitsW, ps){         /* effektive dpi im Ziel (300-dpi-Ausgabe) */
+  const outPx=regUnitsW*ps.s;                 /* Breite der Region in Ausgabe-Pixeln */
+  return img.naturalWidth?Math.round(img.width/outPx*300):0;
+}
+function slotDpiCrop(img, sw, regUnitsW, ps){ /* dpi bei bekanntem Cover-Zuschnitt */
+  const outPx=regUnitsW*ps.s;
+  return Math.round(sw/outPx*300);
+}
+function approxKB(src){ return Math.round(src.length*0.75/1024); }
+
+async function buildResList(){
+  const paper=document.getElementById("resPaper").value;
+  const ps=paperSetup(paper,false);
+  const list=[];
+  /* Deckblatt */
+  if(state.coverPage&&state.cover.img){
+    const im=await loadImg(state.cover.img);
+    if(im){
+      const {sw}=imgAspectParams(im,ps.outW/ps.outH);
+      list.push({slot:"Deckblatt",img:im,kb:approxKB(state.cover.img),dpi:slotDpiCrop(im,sw,ps.outW,ps),target:"ganze Seite"});
+    }
+  }
+  /* Monate */
+  for(let m=0;m<12;m++){
+    if(!state.images[m]){ continue; }
+    const im=await loadImg(state.images[m]);
+    if(!im)continue;
+    const y=state.year, ws=+state.wstart;
+    const first=new Date(y,m,1);
+    const lead=(first.getDay()-ws+7)%7, dim=new Date(y,m+1,0).getDate();
+    const rows=Math.ceil((lead+dim)/7);
+    const PAD=28, HEAD_H=state.showHead?76:0, COL_H=38, BOTTOM=16;
+    let stripH=0, CELL_H=0;
+    if(state.tabMode==="strip") stripH=Math.max(24,Math.min(state.cellH,44))+14;
+    else CELL_H=Math.min((ps.Ht-2*PAD-HEAD_H-COL_H)/rows,state.cellH);
+    const DAY_AREA=stripH?stripH:(COL_H+rows*CELL_H);
+    const CAP_H=capHFor(m);
+    const AREA_H=(state.layout==="top")?Math.max(120,ps.Ht-2*PAD-HEAD_H-DAY_AREA-BOTTOM-CAP_H):0;
+    if(state.layout==="bg"){
+      const {sw}=imgAspectParams(im,ps.outW/ps.outH);
+      list.push({slot:MONTHS[m],img:im,kb:approxKB(state.images[m]),dpi:slotDpiCrop(im,sw,ps.outW,ps),target:"Seitenhintergrund"});
+    }else{
+      const fpw=ps.W*photoScaleFor(m), fph=AREA_H*photoScaleFor(m);
+      const {sw}=imgAspectParams(im,fpw/fph);
+      list.push({slot:MONTHS[m],img:im,kb:approxKB(state.images[m]),dpi:slotDpiCrop(im,sw,fpw,ps),target:Math.round(fpw)+"×"+Math.round(fph)+" E"});
+    }
+  }
+  return list;
+}
+async function runResCheck(){
+  const list=await buildResList();
+  const tb=document.getElementById("resTable");
+  const intro=document.getElementById("resIntro");
+  if(!list.length){
+    intro.textContent="Es wurden keine Bilder gefunden. Füge zuerst Fotos (Monate/Deckblatt) ein.";
+    tb.innerHTML="";
+    document.getElementById("resOverlay").classList.add("on");
+    return;
+  }
+  list.sort((a,b)=>a.dpi-b.dpi);
+  const oriTxt=(state.orientation==="landscape")?"quer":"hoch";
+  intro.textContent="Prüfung von "+list.length+" Bild(er). Bewertung gegen 300 dpi am gewählten Papierformat ("+oriTxt+"format).";
+  let html="<tr><th>Slot</th><th>Pixel</th><th>Dateigröße</th><th>Druckfläche</th><th>Effektive dpi</th></tr>";
+  list.forEach(it=>{
+    let cls=it.dpi>=300?"dpi-ok":(it.dpi>=200?"dpi-warn":"dpi-bad");
+    html+="<tr><td>"+it.slot+"</td><td>"+it.img.naturalWidth+" × "+it.img.naturalHeight+" px</td>"+
+      "<td>~"+(it.kb>=1024?(it.kb/1024).toFixed(1)+" MB":it.kb+" KB")+"</td>"+
+      "<td>"+it.target+"</td><td class=\""+cls+"\">"+it.dpi+" dpi</td></tr>";
+  });
+  tb.innerHTML=html;
+  document.getElementById("resOverlay").classList.add("on");
+}
+document.getElementById("btnResCheck").onclick=runResCheck;
+document.getElementById("btnResClose").onclick=()=>document.getElementById("resOverlay").classList.remove("on");
+document.getElementById("resOverlay").onclick=e=>{ if(e.target.id==="resOverlay")e.target.classList.remove("on"); };
+document.getElementById("resPaper").onchange=runResCheck;
+
+/* ---------------- Export ---------------- */
+(function(){
+  const s=document.getElementById("expMonth");
+  MONTHS.forEach((mn,i)=>{const o=document.createElement("option");o.value=String(i);o.textContent=mn;s.append(o);});
+})();
+function expSuffix(paper,bleed){
+  return "-"+paper+"-"+(state.orientation==="landscape"?"quer":"hoch")+(bleed?"-beschnitt3mm":"")+".jpg";
+}
+document.getElementById("btnExpMonth").onclick=async()=>{
+  const val=document.getElementById("expMonth").value;
+  const paper=document.getElementById("expPaper").value;
+  const bleed=document.getElementById("expBleed").checked;
+  if(val==="cover"){
+    if(!state.coverPage){ alert("Bitte das Deckblatt im Panel aktivieren (Häkchen „Deckblatt anzeigen“)."); return; }
+    const cv=await coverCanvas({paper:paper,bleed:bleed});
+    dl(createSRGBJPEG(cv,300),"deckblatt-"+state.year+expSuffix(paper,bleed));
+    return;
+  }
+  const m=+val;
+  const cv=await monthCanvas(m,{paper:paper,bleed:bleed});
+  dl(createSRGBJPEG(cv,300),"kalender-"+state.year+"-"+String(m+1).padStart(2,"0")+expSuffix(paper,bleed));
+};
+
+document.getElementById("btnExpAll").onclick=async()=>{
+  const paper=document.getElementById("expPaper").value;
+  const bleed=document.getElementById("expBleed").checked;
+  if(state.coverPage){
+    const cv=await coverCanvas({paper:paper,bleed:bleed});
+    dl(createSRGBJPEG(cv,300),"deckblatt-"+state.year+expSuffix(paper,bleed));
+    await new Promise(res=>setTimeout(res,400));
+  }
+  for(let m=0;m<12;m++){
+    const cv=await monthCanvas(m,{paper:paper,bleed:bleed});
+    dl(createSRGBJPEG(cv,300),"kalender-"+state.year+"-"+String(m+1).padStart(2,"0")+expSuffix(paper,bleed));
+    if(m<11)await new Promise(res=>setTimeout(res,400));
+  }
+};
+
+document.getElementById("btnExpYear").onclick=async()=>{
+  const cv=await yearCanvas();
+  dl(createSRGBJPEG(cv,300),"jahresuebersicht-"+state.year+".jpg");
+};
+
+const printStyle=document.createElement("style");
+document.head.appendChild(printStyle);
+function updatePrintStyle(){
+  const paper=document.getElementById("expPaper").value;
+  const dd=dimsFor(paper,state.orientation);
+  printStyle.textContent="@page{size:"+dd[0]+"mm "+dd[1]+"mm;margin:0}"+
+    "@media print{.page{width:"+dd[0]+"mm;min-height:"+dd[1]+"mm;max-width:none;aspect-ratio:auto}.page.cover{aspect-ratio:"+dd[0]+"/"+dd[1]+"}}";
+}
+updatePrintStyle();
+
+document.getElementById("btnSave").onclick=async()=>{
+  await persistNow();
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(state)],{type:"application/json"}));
+  a.download="kaldesigner-"+state.year+".json"; a.click();
+};
+document.getElementById("btnLoad").onclick=()=>document.getElementById("loadFile").click();
+document.getElementById("loadFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=async()=>{
+    try{
+      state=Object.assign({},DEFAULTS,JSON.parse(rd.result));
+      normalizeState();
+      IMGREADY=true;
+      await persistNow();          /* Bilder in IndexedDB, danach neu laden */
+      location.reload();
+    }catch(err){ alert("Ungültige Projektdatei."); }
+  };
+  rd.readAsText(f);
+};
+document.getElementById("btnReset").onclick=()=>{
+  if(confirm("Alle Fotos und Termine dieses Projekts löschen?")){
+    state.images={};state.events={};persistNow().then(render);
+  }
+};
+
+/* ---------------- Start ---------------- */
+async function updateQuota(){
+  const elm=document.getElementById("quotaInfo");
+  if(!navigator.storage||!navigator.storage.estimate){ elm.textContent="nicht verfügbar"; return; }
+  try{
+    const e=await navigator.storage.estimate();
+    const fmt=x=>x>=1073741824?(x/1073741824).toFixed(2)+" GB":(x/1048576).toFixed(1)+" MB";
+    elm.textContent=fmt(e.usage||0)+" von "+fmt(e.quota||0)+" belegt";
+  }catch(err){ elm.textContent="nicht verfügbar"; }
+}
+document.getElementById("btnPersist").onclick=async()=>{
+  if(navigator.storage&&navigator.storage.persist){
+    const ok=await navigator.storage.persist();
+    alert(ok?"✅ Dauerhafter Speicher gewährt – die Bilder bleiben auch bei Speicherdruck erhalten."
+            :"⚠️ Nicht gewährt. Meist hilft es, die Seite als Lesezeichen zu setzen und regelmäßig zu besuchen.");
+  }else alert("Dieser Browser unterstützt die Anforderung nicht.");
+  updateQuota();
+};
+
+(async function boot(){
+  let media={};
+  try{ await idbOpen(); IDB_OK=true; media=await idbReadAll(); }
+  catch(e){ IDB_OK=false; console.warn("IndexedDB nicht verfügbar – Fallback auf localStorage:",e); }
+  if(IDB_OK&&Object.keys(media).length) applyMedia(media);
+  await custRegisterAll();
+  IMGREADY=true;
+  render();
+  updateQuota();
+  if(IDB_OK&&!Object.keys(media).length&&hasMedia()) persistNow();  /* Altbestand migrieren */
+})();
+</script>
+<script>
+(function(){
+  /* Versionsnummer als Klartext neben der Hauptüberschrift anzeigen */
+  var m=document.documentElement.outerHTML.match(/<!--\s*VERSION\s+(\d+)\s*-->/i);
+  if(!m)return;
+  var h=document.querySelector("header h1")||document.querySelector("h1");
+  if(!h)return;
+  var s=document.createElement("span");
+  s.textContent="V"+m[1];
+  s.style.cssText="font-size:.55em;font-weight:400;opacity:.65;margin-left:8px;vertical-align:middle";
+  h.append(s);
+})();
+</script>
+</body>
+</html>
+
+
